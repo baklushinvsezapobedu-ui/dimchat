@@ -5,15 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DimiChat</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #071433;
       color: white;
+      min-height: 100vh;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .screen.active {
       display: flex;
+    }
+
+    .login-screen {
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      padding: 24px;
     }
 
     .box {
@@ -24,7 +40,7 @@
     }
 
     h1 {
-      font-size: 48px;
+      font-size: 42px;
       margin-bottom: 16px;
     }
 
@@ -41,12 +57,10 @@
       border: none;
       outline: none;
       margin-bottom: 16px;
-      box-sizing: border-box;
     }
 
     button {
-      width: 100%;
-      padding: 16px;
+      padding: 16px 20px;
       font-size: 18px;
       border: none;
       border-radius: 12px;
@@ -58,28 +72,161 @@
     button:hover {
       background: #5b5be6;
     }
+
+    .chat-screen {
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: #0b1b44;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .topbar-title {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .nickname {
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #13275c;
+      line-height: 1.4;
+    }
+
+    .message .author {
+      font-size: 12px;
+      color: #a5b4fc;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .message.system {
+      align-self: center;
+      background: rgba(255,255,255,0.08);
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .composer {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: #0b1b44;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .composer input {
+      margin-bottom: 0;
+      background: white;
+      color: black;
+    }
+
+    .composer button {
+      min-width: 120px;
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>DimiChat</h1>
-    <p>Введи свой ник и войди в чат</p>
+  <div id="loginScreen" class="screen login-screen active">
+    <div class="box">
+      <h1>DimiChat</h1>
+      <p>Введи свой ник и войди в чат</p>
+      <input id="nicknameInput" type="text" placeholder="Например: Дима" />
+      <button onclick="enterChat()">Войти</button>
+    </div>
+  </div>
 
-    <input id="nickname" type="text" placeholder="Например: Дима" />
-    <button onclick="enterChat()">Войти</button>
+  <div id="chatScreen" class="screen chat-screen">
+    <div class="topbar">
+      <div class="topbar-title">DimiChat</div>
+      <div class="nickname">Ты: <span id="nicknameView"></span></div>
+    </div>
+
+    <div id="messages" class="messages">
+      <div class="message system">Добро пожаловать в общий чат DimiChat</div>
+      <div class="message">
+        <div class="author">DimiBot</div>
+        Это тестовая версия чата. Скоро подключим общение между всеми друзьями.
+      </div>
+    </div>
+
+    <div class="composer">
+      <input id="messageInput" type="text" placeholder="Напиши сообщение..." />
+      <button onclick="sendMessage()">Отправить</button>
+    </div>
   </div>
 
   <script>
+    const savedNickname = localStorage.getItem("dimichat_nickname");
+
+    if (savedNickname) {
+      openChat(savedNickname);
+    }
+
     function enterChat() {
-      const nickname = document.getElementById('nickname').value.trim();
+      const nickname = document.getElementById("nicknameInput").value.trim();
 
       if (!nickname) {
-        alert('Введите ник');
+        alert("Введите ник");
         return;
       }
 
-      localStorage.setItem('dimichat_nickname', nickname);
-      alert('Ник сохранён: ' + nickname);
+      localStorage.setItem("dimichat_nickname", nickname);
+      openChat(nickname);
+    }
+
+    function openChat(nickname) {
+      document.getElementById("loginScreen").classList.remove("active");
+      document.getElementById("chatScreen").classList.add("active");
+      document.getElementById("nicknameView").textContent = nickname;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      const nickname = localStorage.getItem("dimichat_nickname") || "Гость";
+
+      if (!text) {
+        return;
+      }
+
+      const message = document.createElement("div");
+      message.className = "message";
+      message.innerHTML = `
+        <div class="author">${escapeHtml(nickname)}</div>
+        ${escapeHtml(text)}
+      `;
+
+      document.getElementById("messages").appendChild(message);
+      input.value = "";
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
     }
   </script>
 </body>
