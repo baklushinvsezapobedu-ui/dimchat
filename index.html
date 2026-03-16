@@ -5,79 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DimiChat</title>
 
-<style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
-*{
-box-sizing:border-box;
-}
+<style>
 
 body{
 margin:0;
 font-family:Arial;
 background:#071433;
 color:white;
-height:100vh;
-}
-
-/* экраны */
-
-.screen{
-display:none;
-height:100vh;
-}
-
-.active{
-display:flex;
-}
-
-/* экран входа */
-
-.login{
-align-items:center;
-justify-content:center;
-}
-
-.box{
-text-align:center;
-width:100%;
-max-width:420px;
-padding:30px;
-}
-
-h1{
-font-size:40px;
-margin-bottom:10px;
-}
-
-p{
-color:#cbd5e1;
-margin-bottom:20px;
-}
-
-input{
-width:100%;
-padding:15px;
-font-size:18px;
-border-radius:10px;
-border:none;
-margin-bottom:15px;
-}
-
-button{
-width:100%;
-padding:15px;
-font-size:18px;
-border:none;
-border-radius:10px;
-background:#5b5be6;
-color:white;
-cursor:pointer;
-}
-
-/* чат */
-
-.chat{
-flex-direction:column;
 }
 
 .top{
@@ -89,9 +25,9 @@ align-items:center;
 }
 
 .messages{
-flex:1;
-padding:20px;
+height:80vh;
 overflow:auto;
+padding:20px;
 display:flex;
 flex-direction:column;
 gap:10px;
@@ -99,7 +35,7 @@ gap:10px;
 
 .message{
 background:#13275c;
-padding:10px 14px;
+padding:12px;
 border-radius:10px;
 max-width:70%;
 }
@@ -124,11 +60,18 @@ background:#0b1b44;
 
 .send input{
 flex:1;
-margin:0;
+padding:12px;
+border-radius:8px;
+border:none;
 }
 
-.send button{
-width:120px;
+button{
+padding:12px 16px;
+background:#5b5be6;
+border:none;
+color:white;
+border-radius:8px;
+cursor:pointer;
 }
 
 </style>
@@ -137,37 +80,10 @@ width:120px;
 
 <body>
 
-<!-- экран входа -->
-
-<div id="login" class="screen login active">
-
-<div class="box">
-
-<h1>DimiChat</h1>
-
-<p>Введи свой ник</p>
-
-<input id="nickname" placeholder="Например: Дима">
-
-<button onclick="enterChat()">Войти</button>
-
-</div>
-
-</div>
-
-
-<!-- экран чата -->
-
-<div id="chat" class="screen chat">
-
 <div class="top">
-
 <div>DimiChat</div>
-
-<div>Ты: <span id="myname"></span></div>
-
+<div id="nickname"></div>
 </div>
-
 
 <div id="messages" class="messages">
 
@@ -180,11 +96,9 @@ width:120px;
 
 <div class="send">
 
-<input id="text" placeholder="Напиши сообщение...">
+<input id="text" placeholder="Напиши сообщение">
 
 <button onclick="send()">Отправить</button>
-
-</div>
 
 </div>
 
@@ -192,60 +106,80 @@ width:120px;
 
 <script>
 
+const SUPABASE_URL = "https://fftzvwgulytcdyaplszt.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_xeWjNCuSIYYfHDDm5a_i8w_vXhsaaJO";
+
+const client = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+
 let nickname = localStorage.getItem("dimichat_name");
 
-if(nickname){
-
-openChat(nickname);
-
-}
-
-function enterChat(){
-
-nickname = document.getElementById("nickname").value.trim();
-
 if(!nickname){
-alert("Введите ник");
-return;
-}
+
+nickname = prompt("Введите ваш ник");
 
 localStorage.setItem("dimichat_name",nickname);
 
-openChat(nickname);
+}
+
+document.getElementById("nickname").innerText="Ты: "+nickname;
+
+
+
+async function load(){
+
+let { data } = await client
+.from("messages")
+.select("*")
+.order("created_at");
+
+document.getElementById("messages").innerHTML="";
+
+data.forEach(m=>{
+addMessage(m.nickname,m.message);
+});
 
 }
 
-function openChat(name){
 
-document.getElementById("login").classList.remove("active");
 
-document.getElementById("chat").classList.add("active");
-
-document.getElementById("myname").textContent=name;
-
-}
-
-function send(){
-
-let text=document.getElementById("text");
-
-let value=text.value.trim();
-
-if(!value) return;
+function addMessage(name,text){
 
 let msg=document.createElement("div");
 
 msg.className="message";
 
-msg.innerHTML="<div class='author'>"+nickname+"</div>"+value;
+msg.innerHTML="<div class='author'>"+name+"</div>"+text;
 
 document.getElementById("messages").appendChild(msg);
 
-text.value="";
+}
 
-document.getElementById("messages").scrollTop=999999;
+
+
+async function send(){
+
+let text=document.getElementById("text").value;
+
+if(!text) return;
+
+await client.from("messages").insert({
+nickname:nickname,
+message:text
+});
+
+document.getElementById("text").value="";
+
+load();
 
 }
+
+
+
+load();
+
+setInterval(load,2000);
 
 </script>
 
