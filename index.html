@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DimiChat</title>
+<title>DimiChat Live</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial,sans-serif;
 background:#071433;
 color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
 }
 
 .top{
@@ -22,10 +24,11 @@ padding:15px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+font-size:18px;
 }
 
 .messages{
-height:80vh;
+flex:1;
 overflow:auto;
 padding:20px;
 display:flex;
@@ -63,6 +66,7 @@ flex:1;
 padding:12px;
 border-radius:8px;
 border:none;
+font-size:16px;
 }
 
 button{
@@ -72,115 +76,115 @@ border:none;
 color:white;
 border-radius:8px;
 cursor:pointer;
+font-size:16px;
 }
-
 </style>
 </head>
-
 
 <body>
 
 <div class="top">
-<div>DimiChat</div>
-<div id="nickname"></div>
+  <div>DimiChat</div>
+  <div id="nickname"></div>
 </div>
 
 <div id="messages" class="messages">
-
-<div class="message system">
-Добро пожаловать в чат DimiChat
+  <div class="message system">Добро пожаловать в чат DimiChat</div>
 </div>
-
-</div>
-
 
 <div class="send">
-
-<input id="text" placeholder="Напиши сообщение">
-
-<button onclick="send()">Отправить</button>
-
+  <input id="text" placeholder="Напиши сообщение">
+  <button onclick="send()">Отправить</button>
 </div>
 
-
-
 <script>
-
 const SUPABASE_URL = "https://fftzvwgulytcdyaplszt.supabase.co";
-
 const SUPABASE_KEY = "sb_publishable_xeWjNCuSIYYfHDDm5a_i8w_vXhsaaJO";
 
-const client = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let nickname = localStorage.getItem("dimichat_name");
 
-if(!nickname){
-
-nickname = prompt("Введите ваш ник");
-
-localStorage.setItem("dimichat_name",nickname);
-
+if (!nickname) {
+  nickname = prompt("Введите ваш ник");
+  if (!nickname || !nickname.trim()) {
+    nickname = "Гость";
+  }
+  nickname = nickname.trim();
+  localStorage.setItem("dimichat_name", nickname);
 }
 
-document.getElementById("nickname").innerText="Ты: "+nickname;
+document.getElementById("nickname").innerText = "Ты: " + nickname;
 
-
-
-async function load(){
-
-let { data } = await client
-.from("messages")
-.select("*")
-.order("created_at");
-
-document.getElementById("messages").innerHTML="";
-
-data.forEach(m=>{
-addMessage(m.nickname,m.message);
-});
-
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-
-
-function addMessage(name,text){
-
-let msg=document.createElement("div");
-
-msg.className="message";
-
-msg.innerHTML="<div class='author'>"+name+"</div>"+text;
-
-document.getElementById("messages").appendChild(msg);
-
+function addMessage(name, text) {
+  const msg = document.createElement("div");
+  msg.className = "message";
+  msg.innerHTML = "<div class='author'>" + escapeHtml(name) + "</div>" + escapeHtml(text);
+  document.getElementById("messages").appendChild(msg);
+  document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
 }
 
+async function load() {
+  const { data, error } = await client
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: true });
 
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-async function send(){
+  const box = document.getElementById("messages");
+  box.innerHTML = '<div class="message system">Добро пожаловать в чат DimiChat</div>';
 
-let text=document.getElementById("text").value;
+  data.forEach(m => {
+    addMessage(m.nickname, m.message);
+  });
+}
 
-if(!text) return;
+async function send() {
+  const input = document.getElementById("text");
+  const text = input.value.trim();
 
-await client.from("messages").insert({
-nickname:nickname,
-message:text
-});
+  if (!text) return;
 
-document.getElementById("text").value="";
+  const { error } = await client.from("messages").insert({
+    nickname: nickname,
+    message: text
+  });
+
+  if (error) {
+    console.error(error);
+    alert("Не удалось отправить сообщение");
+    return;
+  }
+
+  input.value = "";
+}
 
 load();
 
-}
-
-
-
-load();
-
-setInterval(load,2000);
-
+client
+  .channel("messages-live")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "messages"
+    },
+    (payload) => {
+      addMessage(payload.new.nickname, payload.new.message);
+    }
+  )
+  .subscribe();
 </script>
 
 </body>
