@@ -963,10 +963,7 @@
 
     async function ensureCurrentUserExists() {
       let { data, error } = await client.from("dimichat_users").select("id, nickname, short_id, bio").eq("nickname", nickname).maybeSingle();
-      if (error) {
-        console.error("dimichat_users load error", error);
-        return;
-      }
+      if (error) return;
 
       if (!data) {
         const shortId = myShortId || await generateUniqueShortId();
@@ -974,10 +971,6 @@
           .insert([{ nickname, short_id: shortId, bio: myBio }])
           .select("id, nickname, short_id, bio")
           .single();
-        if (inserted.error) {
-          console.error("dimichat_users insert error", inserted.error);
-          return;
-        }
         data = inserted.data;
       } else {
         let needUpdate = false;
@@ -988,7 +981,7 @@
           const updated = await client.from("dimichat_users")
             .update(patch).eq("id", data.id)
             .select("id, nickname, short_id, bio").single();
-          if (!updated.error && updated.data) data = updated.data;
+          data = updated.data || data;
         }
       }
 
@@ -1035,35 +1028,23 @@
         return;
       }
 
-      const columns = "id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name, chat_type, group_id";
       let query;
-      let postFilter = (rows) => rows;
-
       if (selectedChat.type === "group") {
         query = client.from("private_messages")
-          .select(columns)
-          .eq("chat_type", "group")
-          .eq("group_id", selectedChat.id)
+          .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name, chat_type, group_id")
+          .eq("chat_type", "group").eq("group_id", selectedChat.id)
           .order("created_at", { ascending: true });
       } else if (selectedChat.type === "self") {
         query = client.from("private_messages")
-          .select(columns)
-          .eq("chat_type", "direct")
-          .eq("sender", nickname)
-          .eq("recipient", nickname)
+          .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name, chat_type, group_id")
+          .eq("chat_type", "direct").eq("sender", nickname).eq("recipient", nickname)
           .order("created_at", { ascending: true });
       } else {
-        const participants = [nickname, selectedChat.nickname];
         query = client.from("private_messages")
-          .select(columns)
+          .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name, chat_type, group_id")
           .eq("chat_type", "direct")
-          .in("sender", participants)
-          .in("recipient", participants)
+          .or(`and(sender.eq.${nickname},recipient.eq.${selectedChat.nickname}),and(sender.eq.${selectedChat.nickname},recipient.eq.${nickname})`)
           .order("created_at", { ascending: true });
-        postFilter = (rows) => (rows || []).filter(msg => (
-          (msg.sender === nickname && msg.recipient === selectedChat.nickname) ||
-          (msg.sender === selectedChat.nickname && msg.recipient === nickname)
-        ));
       }
 
       if (!initial && lastMessageTime) query = query.gt("created_at", lastMessageTime);
@@ -1071,7 +1052,6 @@
 
       const { data, error } = await query;
       if (error) {
-        console.error("loadConversation error", error);
         if (initial) {
           clearMessages();
           addSystem("Не удалось загрузить переписку.");
@@ -1079,14 +1059,12 @@
         return;
       }
 
-      const filteredData = postFilter(data || []);
-
       if (initial) {
         clearMessages();
-        if (!filteredData.length) addSystem(selectedChat.type === "self" ? "Сохраняй здесь важные сообщения." : "Начни диалог первым.");
+        if (!data || !data.length) addSystem(selectedChat.type === "self" ? "Сохраняй здесь важные сообщения." : "Начни диалог первым.");
       }
 
-      for (const msg of filteredData) addMessage(msg);
+      for (const msg of (data || [])) addMessage(msg);
       await loadReactionsForVisibleMessages();
       updateButtonsState();
     }
@@ -1284,8 +1262,7 @@
         updateButtonsState();
         textEl.focus();
       } catch (e) {
-        console.error("sendMessage error", e);
-        alert("Не удалось отправить сообщение. Проверь настройки Supabase и таблиц.");
+        alert("Не удалось отправить сообщение.");
       } finally {
         isSending = false;
         updateButtonsState();
@@ -1300,22 +1277,18 @@
       updateButtonsState();
 
       const targetNickname = selectedChat.nickname;
-      const hiddenResult = await client.from("hidden_chats").upsert({ owner: nickname, target: targetNickname });
-      if (hiddenResult.error) {
-        console.error("hidden chat save error", hiddenResult.error);
-        alert("Не удалось скрыть чат.");
-        isDeleting = false;
-        updateButtonsState();
-        return;
-      }
-
+      await client.from("hidden_chats").upsert({ owner: nickname, target: targetNickname });
       await client.from("pinned_chats").delete().eq("owner", nickname).eq("target", targetNickname);
+      await client.from("private_messages")
+        .delete()
+        .eq("chat_type", "direct")
+        .or(`and(sender.eq.${nickname},recipient.eq.${targetNickname}),and(sender.eq.${targetNickname},recipient.eq.${nickname})`);
 
       hiddenChats.add(targetNickname);
       pinnedChats.delete(targetNickname);
       selectedChat = null;
       clearMessages();
-      addSystem("Чат скрыт только у тебя. Сообщения у собеседника не удаляются.");
+      addSystem("Чат удалён и скрыт.");
       await refreshLists();
       updateChatHeader();
       isDeleting = false;
@@ -1340,32 +1313,11 @@
       const newBio = profileBio.value.trim().slice(0, 300);
       if (!newNickname) return alert("Никнейм не может быть пустым.");
 
-      const oldNickname = nickname;
-      const check = await client.from("dimichat_users").select("id").eq("nickname", newNickname).neq("nickname", oldNickname).maybeSingle();
+      const check = await client.from("dimichat_users").select("id").eq("nickname", newNickname).neq("nickname", nickname).maybeSingle();
       if (check.data) return alert("Такой никнейм уже занят.");
 
-      const userUpdate = await client.from("dimichat_users").update({ nickname: newNickname, bio: newBio }).eq("nickname", oldNickname);
-      if (userUpdate.error) {
-        console.error("profile save error", userUpdate.error);
-        return alert("Не удалось сохранить профиль.");
-      }
-
-      if (newNickname !== oldNickname) {
-        await Promise.all([
-          client.from("private_messages").update({ sender: newNickname }).eq("sender", oldNickname),
-          client.from("private_messages").update({ recipient: newNickname }).eq("recipient", oldNickname),
-          client.from("group_members").update({ nickname: newNickname }).eq("nickname", oldNickname),
-          client.from("group_chats").update({ owner: newNickname }).eq("owner", oldNickname),
-          client.from("hidden_chats").update({ owner: newNickname }).eq("owner", oldNickname),
-          client.from("hidden_chats").update({ target: newNickname }).eq("target", oldNickname),
-          client.from("pinned_chats").update({ owner: newNickname }).eq("owner", oldNickname),
-          client.from("pinned_chats").update({ target: newNickname }).eq("target", oldNickname),
-          client.from("message_reactions").update({ reactor: newNickname }).eq("reactor", oldNickname)
-        ]);
-
-        if (selectedChat?.type === "user" && selectedChat.nickname === oldNickname) selectedChat.nickname = newNickname;
-        if (selectedChat?.type === "self") selectedChat.nickname = newNickname;
-      }
+      const { error } = await client.from("dimichat_users").update({ nickname: newNickname, bio: newBio }).eq("nickname", nickname);
+      if (error) return alert("Не удалось сохранить профиль.");
 
       nickname = newNickname;
       myBio = newBio;
@@ -1375,7 +1327,6 @@
       updateMeChip();
       await refreshLists();
       updateChatHeader();
-      await loadConversation(true);
       alert("Профиль сохранён.");
     }
 
@@ -1406,7 +1357,7 @@
     function logout() {
       if (!confirm("Выйти из аккаунта?")) return;
       localStorage.removeItem("dimichat_name");
-      // client_id оставляем, чтобы браузер не создавал новую локальную сущность при следующем входе
+      localStorage.removeItem("dimichat_client_id");
       localStorage.removeItem("dimichat_short_id");
       localStorage.removeItem("dimichat_my_bio");
       location.reload();
@@ -1472,16 +1423,6 @@
       await loadHiddenAndPinned();
       await loadUsers();
       await loadGroups();
-      renderUsers();
-    }
-
-    async function unhideChatIfNeeded(message) {
-      if (!message || message.chat_type === "group") return;
-      if (message.sender === nickname || message.recipient !== nickname) return;
-      if (!hiddenChats.has(message.sender)) return;
-
-      await client.from("hidden_chats").delete().eq("owner", nickname).eq("target", message.sender);
-      hiddenChats.delete(message.sender);
       renderUsers();
     }
 
@@ -1589,7 +1530,7 @@
       authEnterBtn.addEventListener("click", async () => {
         const value = authNickname.value.trim();
         if (!value) return;
-        nickname = value.replace(/\s+/g, " ").slice(0, 50);
+        nickname = value.slice(0, 50);
         localStorage.setItem("dimichat_name", nickname);
         authOverlay.style.display = "none";
         await initAfterAuth();
@@ -1622,10 +1563,7 @@
               }
 
               const incomingForMe = msg.recipient === nickname && msg.sender !== nickname;
-              if (incomingForMe) {
-                await unhideChatIfNeeded(msg);
-                maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message || "Медиафайл"}`);
-              }
+              if (incomingForMe) maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message || "Медиафайл"}`);
               if (isMessageForSelectedDialog(msg)) addMessage(msg);
             }
 
