@@ -994,7 +994,6 @@
       if (!("Notification" in window)) return;
       if (Notification.permission !== "granted") return;
       if (document.visibilityState === "visible") return;
-
       new Notification(title, { body });
     }
 
@@ -1536,11 +1535,7 @@
       const text = bubble.querySelector(".bubble-body")?.textContent || "";
       const sender = bubble.querySelector(".bubble-head span")?.textContent || "Сообщение";
 
-      forwardPayload = {
-        text,
-        sender
-      };
-
+      forwardPayload = { text, sender };
       const chats = buildChatList();
       forwardList.innerHTML = "";
 
@@ -1607,7 +1602,9 @@
         .insert([{
           sender: nickname,
           recipient,
-          message: text.slice(0, 1000)
+          message: text.slice(0, 1000),
+          forwarded_from_sender: null,
+          forwarded_from_text: null
         }])
         .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text")
         .single();
@@ -1631,40 +1628,59 @@
 
     async function deleteCurrentChat() {
       if (!selectedChat || selectedChat.type === "self" || isDeleting) return;
-      if (!confirm(`Удалить чат с ${selectedChat.nickname}? Он исчезнет из списка, пока пользователь снова не появится.`)) return;
+      if (!confirm(`Удалить чат с ${selectedChat.nickname}? Он исчезнет из списка слева.`)) return;
 
       isDeleting = true;
       updateButtonsState();
 
-      await client.from("hidden_chats").upsert({
-        owner: nickname,
-        target: selectedChat.nickname
-      });
+      const targetNickname = selectedChat.nickname;
 
-      await client.from("pinned_chats")
+      const hideResult = await client
+        .from("hidden_chats")
+        .upsert({
+          owner: nickname,
+          target: targetNickname
+        });
+
+      if (hideResult.error) {
+        console.error("Ошибка скрытия чата:", hideResult.error);
+        alert("Не удалось скрыть чат.");
+        isDeleting = false;
+        updateButtonsState();
+        return;
+      }
+
+      await client
+        .from("pinned_chats")
         .delete()
         .eq("owner", nickname)
-        .eq("target", selectedChat.nickname);
+        .eq("target", targetNickname);
 
-      const { error } = await client
+      const deleteResult = await client
         .from("private_messages")
         .delete()
-        .or(`and(sender.eq.${nickname},recipient.eq.${selectedChat.nickname}),and(sender.eq.${selectedChat.nickname},recipient.eq.${nickname})`);
+        .or(
+          `and(sender.eq.${nickname},recipient.eq.${targetNickname}),and(sender.eq.${targetNickname},recipient.eq.${nickname})`
+        );
 
-      isDeleting = false;
-      updateButtonsState();
-
-      if (error) {
-        console.error("Ошибка удаления чата:", error);
+      if (deleteResult.error) {
+        console.error("Ошибка удаления сообщений:", deleteResult.error);
       }
+
+      hiddenChats.add(targetNickname);
+      pinnedChats.delete(targetNickname);
 
       selectedChat = null;
       clearMessages();
-      addSystem("Чат скрыт.");
+      addSystem("Чат удалён и скрыт.");
+
       await loadHiddenAndPinned();
       await loadUsers();
       renderUsers();
       updateChatHeader();
+      updateButtonsState();
+
+      isDeleting = false;
     }
 
     async function togglePinCurrentChat() {
@@ -1786,7 +1802,6 @@
       });
 
       authNotifyBtn.addEventListener("click", requestNotifications);
-
       window.addEventListener("resize", syncResponsiveState);
     }
 
@@ -1801,7 +1816,6 @@
 
         if (payload.eventType === "INSERT" && payload.new) {
           const msg = payload.new;
-
           const incomingForMe = msg.recipient === nickname && msg.sender !== nickname;
           if (incomingForMe) {
             maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message}`);
