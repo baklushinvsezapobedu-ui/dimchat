@@ -8,6 +8,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body{
       margin:0;
       font-family:Arial,sans-serif;
@@ -98,6 +102,7 @@
       background:rgba(255,255,255,0.1);
       align-self:center;
       text-align:center;
+      max-width:90%;
     }
 
     .send{
@@ -124,11 +129,26 @@
       border-radius:8px;
       cursor:pointer;
       font-size:16px;
+      min-width:120px;
     }
 
     button:disabled{
       opacity:.6;
       cursor:not-allowed;
+    }
+
+    @media (max-width: 700px) {
+      .message {
+        max-width: 88%;
+      }
+
+      .send {
+        padding: 10px;
+      }
+
+      button {
+        min-width: auto;
+      }
     }
   </style>
 </head>
@@ -189,8 +209,12 @@
 
     const seenMessageIds = new Set();
     let typingTimeout = null;
+    let presenceInterval = null;
+    let pollingInterval = null;
     let isTyping = false;
     let isSending = false;
+    let lastMessageTime = null;
+    let isInitialLoadDone = false;
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -220,8 +244,16 @@
       scrollToBottom();
     }
 
+    function updateLastMessageTime(createdAt) {
+      if (!createdAt) return;
+      if (!lastMessageTime || new Date(createdAt) > new Date(lastMessageTime)) {
+        lastMessageTime = createdAt;
+      }
+    }
+
     function addMessage(message) {
       if (!message) return;
+
       if (message.id && seenMessageIds.has(message.id)) return;
       if (message.id) seenMessageIds.add(message.id);
 
@@ -235,26 +267,43 @@
       `;
 
       messagesBox.appendChild(msg);
+      updateLastMessageTime(message.created_at);
       scrollToBottom();
     }
 
-    async function loadMessages() {
-      const { data, error } = await client
+    async function loadMessages(initial = false) {
+      let query = client
         .from("messages")
         .select("id, nickname, message, created_at")
-        .order("created_at", { ascending: true })
-        .limit(200);
+        .order("created_at", { ascending: true });
+
+      if (!initial && lastMessageTime) {
+        query = query.gt("created_at", lastMessageTime);
+      } else {
+        query = query.limit(200);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Ошибка загрузки сообщений:", error);
-        addSystemMessage("Не удалось загрузить историю сообщений");
+
+        if (initial && !isInitialLoadDone) {
+          addSystemMessage("Не удалось загрузить историю сообщений");
+        }
         return;
       }
 
-      messagesBox.innerHTML = '<div class="message system">Добро пожаловать в чат DimiChat</div>';
-      seenMessageIds.clear();
+      if (initial) {
+        messagesBox.innerHTML = '<div class="message system">Добро пожаловать в чат DimiChat</div>';
+        seenMessageIds.clear();
+      }
 
       (data || []).forEach(addMessage);
+
+      if (initial) {
+        isInitialLoadDone = true;
+      }
     }
 
     function renderOnlineUsers(state) {
@@ -263,6 +312,7 @@
       Object.values(state).forEach((presences) => {
         presences.forEach((presence) => {
           if (!presence.nickname) return;
+
           usersMap.set(presence.client_id, {
             nickname: presence.nickname,
             typing: !!presence.typing
@@ -271,15 +321,15 @@
       });
 
       const users = Array.from(usersMap.values());
-      const names = users.map(u => u.nickname);
+      const names = users.map((u) => u.nickname);
 
       onlineUsersEl.textContent = names.length
         ? "Онлайн: " + names.join(", ")
         : "Онлайн: никого";
 
       const typingNames = users
-        .filter(u => u.typing && u.nickname !== nickname)
-        .map(u => u.nickname);
+        .filter((u) => u.typing && u.nickname !== nickname)
+        .map((u) => u.nickname);
 
       typingUsersEl.textContent = typingNames.length
         ? typingNames.join(", ") + " печатает..."
@@ -313,7 +363,9 @@
           table: "messages"
         },
         (payload) => {
-          addMessage(payload.new);
+          if (payload && payload.new) {
+            addMessage(payload.new);
+          }
         }
       )
       .subscribe((status) => {
@@ -324,12 +376,22 @@
       roomStateEl.textContent = "Статус: " + status;
 
       if (status === "SUBSCRIBED") {
-        await roomChannel.track({
-          client_id: clientId,
-          nickname,
-          typing: false,
-          online_at: new Date().toISOString()
-        });
+        await updatePresenceTyping(false);
+
+        if (!presenceInterval) {
+          presenceInterval = setInterval(async () => {
+            try {
+              await roomChannel.track({
+                client_id: clientId,
+                nickname,
+                typing: isTyping,
+                online_at: new Date().toISOString()
+              });
+            } catch (e) {
+              console.warn("Ошибка поддержания presence:", e);
+            }
+          }, 15000);
+        }
       }
     });
 
@@ -409,8 +471,18 @@
       input.focus();
     }
 
+    loadMessages(true);
+
+    pollingInterval = setInterval(() => {
+      loadMessages(false);
+    }, 1000);
+
     window.addEventListener("beforeunload", async () => {
       try {
+        if (typingTimeout) clearTimeout(typingTimeout);
+        if (pollingInterval) clearInterval(pollingInterval);
+        if (presenceInterval) clearInterval(presenceInterval);
+
         await roomChannel.untrack();
         await client.removeChannel(roomChannel);
         await client.removeChannel(messagesChannel);
@@ -418,8 +490,6 @@
         console.warn("Ошибка при отключении каналов:", e);
       }
     });
-
-    loadMessages();
   </script>
 </body>
 </html>
