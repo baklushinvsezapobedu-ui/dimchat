@@ -14,7 +14,6 @@
       --text:#eef4ff;
       --muted:#9fb3df;
       --accent:#7c5cff;
-      --accent-2:#28c7fa;
       --danger:#d83f68;
       --success:#27d6a2;
       --bg:#061126;
@@ -22,7 +21,6 @@
       --bottom-safe: env(safe-area-inset-bottom, 0px);
       --left-safe: env(safe-area-inset-left, 0px);
       --right-safe: env(safe-area-inset-right, 0px);
-      --radius:20px;
     }
 
     *{
@@ -558,6 +556,29 @@
       word-break:break-word;
     }
 
+    .media-thumb{
+      margin-top:10px;
+      max-width:100%;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04);
+    }
+
+    .media-thumb img,
+    .media-thumb video{
+      width:100%;
+      max-height:320px;
+      object-fit:cover;
+      display:block;
+      cursor:pointer;
+    }
+
+    .media-thumb.video video{
+      object-fit:contain;
+      background:#000;
+    }
+
     .bubble-footer{
       margin-top:10px;
       display:flex;
@@ -773,11 +794,6 @@
       cursor:pointer;
     }
 
-    @keyframes fadeUp{
-      from{opacity:0;transform:translateY(8px)}
-      to{opacity:1;transform:translateY(0)}
-    }
-
     @keyframes messageIn{
       from{opacity:0;transform:translateY(6px)}
       to{opacity:1;transform:translateY(0)}
@@ -840,7 +856,8 @@
         width:100%;
       }
 
-      .buttons-col button{
+      .buttons-col button,
+      .buttons-col label{
         width:100%;
       }
     }
@@ -895,6 +912,11 @@
         font-size:14px;
       }
 
+      .media-thumb img,
+      .media-thumb video{
+        max-height:220px;
+      }
+
       button{
         font-size:13px;
         padding:10px 12px;
@@ -933,7 +955,7 @@
       </div>
 
       <div class="auth-note">
-        Интерфейс оптимизирован под смартфоны и работает без тяжёлых анимаций.
+        Фото и видео можно просматривать прямо в чате, без скачивания.
       </div>
     </div>
   </div>
@@ -949,6 +971,15 @@
       <div style="margin-top:14px">
         <button class="secondary" id="closeForwardModalBtn">Закрыть</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal" id="mediaPreviewModal">
+    <div class="modal-card" style="width:min(100%, 900px);padding:12px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="secondary" id="closeMediaPreviewBtn">Закрыть</button>
+      </div>
+      <div id="mediaPreviewContent"></div>
     </div>
   </div>
 
@@ -1039,6 +1070,8 @@
         <div class="composer">
           <textarea id="text" placeholder="Напиши сообщение..."></textarea>
           <div class="buttons-col">
+            <label class="ghost" for="mediaInput" style="display:flex;align-items:center;justify-content:center;cursor:pointer;min-width:52px">＋</label>
+            <input id="mediaInput" type="file" accept="image/*,video/*" style="display:none" />
             <button class="primary" id="sendBtn" disabled>Отправить</button>
           </div>
         </div>
@@ -1051,6 +1084,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdHpod2d1bHl0Y2R5YXBsc3p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4ODUsImV4cCI6MjA4OTI0Mjg4NX0.hqjbhMlIYPCARVjRq7qtFWvN88quKjUqRnckbW9V0kI";
     const EMOJIS = ["❤️","👍","🔥","😂","😍","😮","👏","😢"];
     const SELF_CHAT_ID = "__self__";
+    const MEDIA_BUCKET = "chat-media";
 
     const { createClient } = window.supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1083,6 +1117,8 @@
     const messagesEl = document.getElementById("messages");
     const textEl = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
+    const mediaInput = document.getElementById("mediaInput");
+
     const searchNameEl = document.getElementById("searchName");
     const searchIdEl = document.getElementById("searchId");
     const meChipEl = document.getElementById("meChip");
@@ -1095,6 +1131,10 @@
     const forwardModal = document.getElementById("forwardModal");
     const forwardList = document.getElementById("forwardList");
     const closeForwardModalBtn = document.getElementById("closeForwardModalBtn");
+
+    const mediaPreviewModal = document.getElementById("mediaPreviewModal");
+    const mediaPreviewContent = document.getElementById("mediaPreviewContent");
+    const closeMediaPreviewBtn = document.getElementById("closeMediaPreviewBtn");
 
     let nickname = localStorage.getItem("dimichat_name");
     let clientId = localStorage.getItem("dimichat_client_id");
@@ -1112,7 +1152,9 @@
     let openReactionPickerFor = null;
     let reactionMap = new Map();
     let forwardPayload = null;
+    let selectedMediaFile = null;
     const seenMessageIds = new Set();
+    const messageCache = new Map();
 
     if (!clientId) {
       clientId = crypto.randomUUID();
@@ -1274,10 +1316,11 @@
     function updateButtonsState() {
       const hasSelectedChat = !!selectedChat;
       const hasText = !!textEl.value.trim();
+      const hasMedia = !!selectedMediaFile;
       const deletable = hasSelectedChat && selectedChat.type !== "self";
       const pinnable = hasSelectedChat && selectedChat.type !== "self";
 
-      sendBtn.disabled = !hasSelectedChat || !hasText || isSending;
+      sendBtn.disabled = !hasSelectedChat || (!hasText && !hasMedia) || isSending;
       deleteChatBtn.disabled = !deletable || isDeleting;
       pinChatBtn.disabled = !pinnable;
 
@@ -1300,6 +1343,7 @@
       messagesEl.innerHTML = "";
       seenMessageIds.clear();
       reactionMap = new Map();
+      messageCache.clear();
       lastMessageTime = null;
       openReactionPickerFor = null;
     }
@@ -1356,10 +1400,36 @@
       `;
     }
 
+    function renderMediaBlock(message) {
+      if (!message?.media_path || !message?.media_type) return "";
+
+      const { data } = client.storage.from(MEDIA_BUCKET).getPublicUrl(message.media_path);
+      const mediaUrl = data.publicUrl;
+
+      if ((message.media_type || "").startsWith("image/")) {
+        return `
+          <div class="media-thumb" data-open-media="${message.id}">
+            <img src="${mediaUrl}" alt="${escapeHtml(message.media_name || "image")}" loading="lazy" />
+          </div>
+        `;
+      }
+
+      if ((message.media_type || "").startsWith("video/")) {
+        return `
+          <div class="media-thumb video" data-open-media="${message.id}">
+            <video src="${mediaUrl}" preload="metadata" playsinline controls></video>
+          </div>
+        `;
+      }
+
+      return "";
+    }
+
     function addMessage(message) {
       if (!message) return;
       if (message.id && seenMessageIds.has(message.id)) return;
       if (message.id) seenMessageIds.add(message.id);
+      messageCache.set(message.id, message);
 
       const isMe = message.sender === nickname;
       const div = document.createElement("div");
@@ -1380,7 +1450,8 @@
             ${message.forwarded_from_text ? `<div style="margin-top:4px;opacity:.85">${escapeHtml(message.forwarded_from_text)}</div>` : ""}
           </div>
         ` : ""}
-        <div class="bubble-body">${escapeHtml(message.message)}</div>
+        <div class="bubble-body">${escapeHtml(message.message || "")}</div>
+        ${renderMediaBlock(message)}
         <div class="bubble-footer">
           <div class="bubble-actions">
             <button class="ghost" style="min-width:auto;padding:8px 10px" data-open-picker="${message.id}">Реакция</button>
@@ -1640,7 +1711,7 @@
 
       let query = client
         .from("private_messages")
-        .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text")
+        .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name")
         .or(currentDialogFilterString())
         .order("created_at", { ascending: true });
 
@@ -1720,20 +1791,20 @@
     }
 
     async function saveMessageToFavorites(messageId) {
-      const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
-      if (!bubble) return;
-
-      const body = bubble.querySelector(".bubble-body")?.textContent || "";
-      const sender = bubble.querySelector(".bubble-head span")?.textContent || "Сообщение";
+      const message = messageCache.get(messageId);
+      if (!message) return;
 
       const { error } = await client
         .from("private_messages")
         .insert([{
           sender: nickname,
           recipient: nickname,
-          message: body,
-          forwarded_from_sender: sender,
-          forwarded_from_text: body.slice(0, 120)
+          message: message.message || "",
+          forwarded_from_sender: message.sender || "Сообщение",
+          forwarded_from_text: (message.message || "").slice(0, 120),
+          media_path: message.media_path || null,
+          media_type: message.media_type || null,
+          media_name: message.media_name || null
         }]);
 
       if (error) {
@@ -1747,13 +1818,17 @@
     }
 
     function openForwardModalFor(messageId) {
-      const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
-      if (!bubble) return;
+      const message = messageCache.get(messageId);
+      if (!message) return;
 
-      const text = bubble.querySelector(".bubble-body")?.textContent || "";
-      const sender = bubble.querySelector(".bubble-head span")?.textContent || "Сообщение";
+      forwardPayload = {
+        text: message.message || "",
+        sender: message.sender || "Сообщение",
+        media_path: message.media_path || null,
+        media_type: message.media_type || null,
+        media_name: message.media_name || null
+      };
 
-      forwardPayload = { text, sender };
       const chats = buildChatList();
       forwardList.innerHTML = "";
 
@@ -1787,7 +1862,10 @@
           recipient,
           message: forwardPayload.text,
           forwarded_from_sender: forwardPayload.sender,
-          forwarded_from_text: forwardPayload.text.slice(0, 120)
+          forwarded_from_text: forwardPayload.text.slice(0, 120),
+          media_path: forwardPayload.media_path,
+          media_type: forwardPayload.media_type,
+          media_name: forwardPayload.media_name
         }]);
 
       if (error) {
@@ -1803,9 +1881,52 @@
       }
     }
 
+    async function uploadMedia(file) {
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.name.replace(/\s+/g, "_")}`;
+      const filePath = `${nickname}/${safeName}`;
+
+      const { error: uploadError } = await client.storage
+        .from(MEDIA_BUCKET)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type
+        });
+
+      if (uploadError) throw uploadError;
+
+      return {
+        path: filePath,
+        type: file.type,
+        name: file.name
+      };
+    }
+
+    function openMediaPreview(message) {
+      if (!message?.media_path) return;
+
+      const { data } = client.storage.from(MEDIA_BUCKET).getPublicUrl(message.media_path);
+      const mediaUrl = data.publicUrl;
+
+      if ((message.media_type || "").startsWith("image/")) {
+        mediaPreviewContent.innerHTML = `
+          <img src="${mediaUrl}" alt="media" style="width:100%;max-height:75vh;object-fit:contain;border-radius:16px;display:block" />
+        `;
+      } else if ((message.media_type || "").startsWith("video/")) {
+        mediaPreviewContent.innerHTML = `
+          <video src="${mediaUrl}" controls playsinline style="width:100%;max-height:75vh;border-radius:16px;background:#000;display:block"></video>
+        `;
+      } else {
+        mediaPreviewContent.innerHTML = "";
+      }
+
+      mediaPreviewModal.classList.add("show");
+    }
+
     async function sendMessage() {
       const text = textEl.value.trim();
-      if (!text || !selectedChat || isSending) {
+
+      if ((!text && !selectedMediaFile) || !selectedChat || isSending) {
         updateButtonsState();
         return;
       }
@@ -1815,33 +1936,55 @@
 
       const recipient = selectedChat.type === "self" ? nickname : selectedChat.nickname;
 
-      const { data, error } = await client
-        .from("private_messages")
-        .insert([{
-          sender: nickname,
-          recipient,
-          message: text.slice(0, 1000),
-          forwarded_from_sender: null,
-          forwarded_from_text: null
-        }])
-        .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text")
-        .single();
+      let mediaData = {
+        path: null,
+        type: null,
+        name: null
+      };
 
-      isSending = false;
-      updateButtonsState();
+      try {
+        if (selectedMediaFile) {
+          mediaData = await uploadMedia(selectedMediaFile);
+        }
 
-      if (error) {
-        console.error("Ошибка отправки:", error);
-        alert("Не удалось отправить сообщение: " + (error.message || "неизвестно"));
-        return;
+        const { data, error } = await client
+          .from("private_messages")
+          .insert([{
+            sender: nickname,
+            recipient,
+            message: text.slice(0, 1000),
+            forwarded_from_sender: null,
+            forwarded_from_text: null,
+            media_path: mediaData.path,
+            media_type: mediaData.type,
+            media_name: mediaData.name
+          }])
+          .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text, media_path, media_type, media_name")
+          .single();
+
+        isSending = false;
+        updateButtonsState();
+
+        if (error) {
+          console.error("Ошибка отправки:", error);
+          alert("Не удалось отправить сообщение: " + (error.message || "неизвестно"));
+          return;
+        }
+
+        if (data && isMessageForSelectedDialog(data)) addMessage(data);
+
+        textEl.value = "";
+        selectedMediaFile = null;
+        mediaInput.value = "";
+        autosizeTextarea();
+        updateButtonsState();
+        textEl.focus();
+      } catch (err) {
+        console.error("Ошибка загрузки медиа:", err);
+        alert("Не удалось загрузить медиафайл.");
+        isSending = false;
+        updateButtonsState();
       }
-
-      if (data && isMessageForSelectedDialog(data)) addMessage(data);
-
-      textEl.value = "";
-      autosizeTextarea();
-      updateButtonsState();
-      textEl.focus();
     }
 
     async function deleteCurrentChat() {
@@ -2031,6 +2174,16 @@
       searchNameEl.addEventListener("input", renderUsers);
       searchIdEl.addEventListener("input", renderUsers);
 
+      mediaInput.addEventListener("change", () => {
+        selectedMediaFile = mediaInput.files?.[0] || null;
+        updateButtonsState();
+      });
+
+      closeMediaPreviewBtn.addEventListener("click", () => {
+        mediaPreviewModal.classList.remove("show");
+        mediaPreviewContent.innerHTML = "";
+      });
+
       textEl.addEventListener("input", () => {
         autosizeTextarea();
         updateButtonsState();
@@ -2044,6 +2197,14 @@
       });
 
       messagesEl.addEventListener("click", async (e) => {
+        const mediaOpen = e.target.closest("[data-open-media]");
+        if (mediaOpen) {
+          const messageId = Number(mediaOpen.dataset.openMedia);
+          const message = messageCache.get(messageId);
+          if (message) openMediaPreview(message);
+          return;
+        }
+
         const openPickerBtn = e.target.closest("[data-open-picker]");
         if (openPickerBtn) {
           const messageId = Number(openPickerBtn.dataset.openPicker);
@@ -2120,7 +2281,7 @@
           const msg = payload.new;
           const incomingForMe = msg.recipient === nickname && msg.sender !== nickname;
           if (incomingForMe) {
-            maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message}`);
+            maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message || "Медиафайл"}`);
           }
           if (isMessageForSelectedDialog(msg)) {
             addMessage(msg);
