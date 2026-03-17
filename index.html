@@ -113,6 +113,7 @@
       border-radius:8px;
       border:none;
       font-size:16px;
+      outline:none;
     }
 
     button{
@@ -151,7 +152,7 @@
   </div>
 
   <div class="send">
-    <input id="text" placeholder="Напиши сообщение" autocomplete="off" />
+    <input id="text" placeholder="Напиши сообщение" autocomplete="off" maxlength="1000" />
     <button id="sendBtn">Отправить</button>
   </div>
 
@@ -159,7 +160,8 @@
     const SUPABASE_URL = "https://fftzvwgulytcdyaplszt.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xeWjNCuSIYYfHDDm5a_i8w_vXhsaaJO";
 
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { createClient } = window.supabase;
+    const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const messagesBox = document.getElementById("messages");
     const input = document.getElementById("text");
@@ -173,7 +175,7 @@
     if (!nickname) {
       nickname = prompt("Введите ваш ник");
       if (!nickname || !nickname.trim()) nickname = "Гость";
-      nickname = nickname.trim();
+      nickname = nickname.trim().slice(0, 50);
       localStorage.setItem("dimichat_name", nickname);
     }
 
@@ -183,11 +185,12 @@
       localStorage.setItem("dimichat_client_id", clientId);
     }
 
-    nicknameEl.innerText = "Ты: " + nickname;
+    nicknameEl.textContent = "Ты: " + nickname;
 
     const seenMessageIds = new Set();
     let typingTimeout = null;
     let isTyping = false;
+    let isSending = false;
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -198,6 +201,7 @@
     function formatTime(value) {
       if (!value) return "";
       const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
       return date.toLocaleTimeString("ru-RU", {
         hour: "2-digit",
         minute: "2-digit"
@@ -218,7 +222,6 @@
 
     function addMessage(message) {
       if (!message) return;
-
       if (message.id && seenMessageIds.has(message.id)) return;
       if (message.id) seenMessageIds.add(message.id);
 
@@ -239,7 +242,8 @@
       const { data, error } = await client
         .from("messages")
         .select("id, nickname, message, created_at")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .limit(200);
 
       if (error) {
         console.error("Ошибка загрузки сообщений:", error);
@@ -250,7 +254,7 @@
       messagesBox.innerHTML = '<div class="message system">Добро пожаловать в чат DimiChat</div>';
       seenMessageIds.clear();
 
-      data.forEach(addMessage);
+      (data || []).forEach(addMessage);
     }
 
     function renderOnlineUsers(state) {
@@ -299,7 +303,7 @@
         renderOnlineUsers(roomChannel.presenceState());
       });
 
-    client
+    const messagesChannel = client
       .channel("messages-live")
       .on(
         "postgres_changes",
@@ -330,15 +334,19 @@
     });
 
     async function updatePresenceTyping(value) {
-      const result = await roomChannel.track({
-        client_id: clientId,
-        nickname,
-        typing: value,
-        online_at: new Date().toISOString()
-      });
+      try {
+        const result = await roomChannel.track({
+          client_id: clientId,
+          nickname,
+          typing: value,
+          online_at: new Date().toISOString()
+        });
 
-      if (result === "ok") {
-        isTyping = value;
+        if (result === "ok") {
+          isTyping = value;
+        }
+      } catch (err) {
+        console.warn("Ошибка обновления typing:", err);
       }
     }
 
@@ -364,44 +372,47 @@
 
     async function sendMessage() {
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || isSending) return;
 
+      isSending = true;
       sendBtn.disabled = true;
 
       const payload = {
-        nickname,
-        message: text
+        nickname: nickname.slice(0, 50),
+        message: text.slice(0, 1000)
       };
 
-      const { data, error } = await client
+      const { error } = await client
         .from("messages")
-        .insert(payload)
-        .select("id, nickname, message, created_at")
-        .single();
-
-      sendBtn.disabled = false;
+        .insert([payload]);
 
       if (error) {
         console.error("Ошибка отправки:", error);
-        alert("Не удалось отправить сообщение. Подробности смотри в консоли.");
+        alert(
+          "Не удалось отправить сообщение.\n\n" +
+          "Текст ошибки: " + (error.message || "неизвестно")
+        );
+        isSending = false;
+        sendBtn.disabled = false;
         return;
       }
 
       input.value = "";
-
       clearTimeout(typingTimeout);
       await updatePresenceTyping(false);
 
-      if (data) {
-        addMessage(data);
-      }
+      isSending = false;
+      sendBtn.disabled = false;
+      input.focus();
     }
 
     window.addEventListener("beforeunload", async () => {
       try {
         await roomChannel.untrack();
+        await client.removeChannel(roomChannel);
+        await client.removeChannel(messagesChannel);
       } catch (e) {
-        console.warn("Не удалось снять presence:", e);
+        console.warn("Ошибка при отключении каналов:", e);
       }
     });
 
