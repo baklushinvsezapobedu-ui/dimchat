@@ -39,9 +39,19 @@
     }
 
     .top-right {
-      text-align: right;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       font-size: 14px;
       color: #c7d2fe;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .main {
@@ -118,6 +128,17 @@
       border-bottom: 1px solid rgba(255,255,255,0.08);
       color: #dbeafe;
       font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .messages {
@@ -186,13 +207,25 @@
       color: white;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
       min-width: 120px;
+    }
+
+    button:hover {
+      opacity: 0.95;
     }
 
     button:disabled {
       opacity: .6;
       cursor: not-allowed;
+    }
+
+    .danger {
+      background: #b91c1c;
+    }
+
+    .secondary {
+      background: #334155;
     }
 
     @media (max-width: 900px) {
@@ -218,7 +251,13 @@
       <div><strong>DimiChat</strong></div>
       <div id="roomState" style="font-size:13px;color:#93c5fd;">Подключение...</div>
     </div>
-    <div class="top-right" id="nickname"></div>
+
+    <div class="top-right">
+      <div id="nickname"></div>
+      <div class="top-actions">
+        <button id="logoutBtn" class="secondary">Выйти</button>
+      </div>
+    </div>
   </div>
 
   <div class="main">
@@ -228,10 +267,17 @@
     </aside>
 
     <section class="chat-area">
-      <div id="chatHeader" class="chat-header">Выбери пользователя слева</div>
+      <div id="chatHeader" class="chat-header">
+        <span id="chatTitle">Выбери пользователя слева</span>
+        <div class="chat-actions">
+          <button id="deleteChatBtn" class="danger" disabled>Удалить чат</button>
+        </div>
+      </div>
+
       <div id="messages" class="messages">
         <div class="message system">Здесь будут личные сообщения</div>
       </div>
+
       <div class="send">
         <input id="text" placeholder="Напиши сообщение" autocomplete="off" maxlength="1000" />
         <button id="sendBtn">Отправить</button>
@@ -252,7 +298,9 @@
     const nicknameEl = document.getElementById("nickname");
     const roomStateEl = document.getElementById("roomState");
     const usersListEl = document.getElementById("usersList");
-    const chatHeaderEl = document.getElementById("chatHeader");
+    const chatTitleEl = document.getElementById("chatTitle");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const deleteChatBtn = document.getElementById("deleteChatBtn");
 
     let nickname = localStorage.getItem("dimichat_name");
     if (!nickname) {
@@ -266,6 +314,8 @@
 
     let selectedUser = null;
     let isSending = false;
+    let isDeletingChat = false;
+    let isLoggingOut = false;
     let pollingInterval = null;
     let lastMessageTime = null;
     let usersCache = [];
@@ -303,6 +353,10 @@
       messagesBox.innerHTML = "";
       seenMessageIds.clear();
       lastMessageTime = null;
+    }
+
+    function updateDeleteButtonState() {
+      deleteChatBtn.disabled = !selectedUser || isDeletingChat || isLoggingOut;
     }
 
     function addMessage(message) {
@@ -368,9 +422,17 @@
         return;
       }
 
-      usersCache = (data || []).filter(user => user.nickname !== nickname);
+      usersCache = (data || []).filter((user) => user.nickname !== nickname);
+
+      if (selectedUser && !usersCache.some((user) => user.nickname === selectedUser)) {
+        selectedUser = null;
+        chatTitleEl.textContent = "Выбери пользователя слева";
+        clearMessages();
+        addSystemMessage("Выбери пользователя слева");
+      }
 
       renderUsers();
+      updateDeleteButtonState();
     }
 
     function renderUsers() {
@@ -397,8 +459,9 @@
 
         item.addEventListener("click", async () => {
           selectedUser = user.nickname;
-          chatHeaderEl.textContent = "Чат с " + selectedUser;
+          chatTitleEl.textContent = "Чат с " + selectedUser;
           renderUsers();
+          updateDeleteButtonState();
           await loadConversation(true);
           input.focus();
         });
@@ -462,15 +525,19 @@
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "private_messages"
         },
-        (payload) => {
+        async (payload) => {
           roomStateEl.textContent = "Статус: SUBSCRIBED";
 
-          if (payload && payload.new && isMessageForCurrentDialog(payload.new)) {
+          if (payload.eventType === "INSERT" && payload.new && isMessageForCurrentDialog(payload.new)) {
             addMessage(payload.new);
+          }
+
+          if (payload.eventType === "DELETE" && selectedUser) {
+            await loadConversation(true);
           }
         }
       )
@@ -484,7 +551,7 @@
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "dimichat_users"
         },
@@ -498,7 +565,7 @@
 
     async function sendMessage() {
       const text = input.value.trim();
-      if (!text || !selectedUser || isSending) return;
+      if (!text || !selectedUser || isSending || isDeletingChat || isLoggingOut) return;
 
       isSending = true;
       sendBtn.disabled = true;
@@ -534,6 +601,65 @@
       sendBtn.disabled = false;
     }
 
+    async function deleteCurrentChat() {
+      if (!selectedUser || isDeletingChat || isLoggingOut) return;
+
+      const ok = confirm(`Удалить весь чат с пользователем ${selectedUser}?`);
+      if (!ok) return;
+
+      isDeletingChat = true;
+      deleteChatBtn.disabled = true;
+      sendBtn.disabled = true;
+
+      const { error } = await client
+        .from("private_messages")
+        .delete()
+        .or(
+          `and(sender.eq.${nickname},recipient.eq.${selectedUser}),and(sender.eq.${selectedUser},recipient.eq.${nickname})`
+        );
+
+      if (error) {
+        console.error("Ошибка удаления чата:", error);
+        alert("Не удалось удалить чат: " + (error.message || "неизвестно"));
+        isDeletingChat = false;
+        sendBtn.disabled = false;
+        updateDeleteButtonState();
+        return;
+      }
+
+      clearMessages();
+      addSystemMessage("Чат удалён");
+      isDeletingChat = false;
+      sendBtn.disabled = false;
+      updateDeleteButtonState();
+    }
+
+    async function logout() {
+      if (isLoggingOut) return;
+
+      const ok = confirm("Выйти из аккаунта?");
+      if (!ok) return;
+
+      isLoggingOut = true;
+      logoutBtn.disabled = true;
+      sendBtn.disabled = true;
+      deleteChatBtn.disabled = true;
+
+      try {
+        await client
+          .from("dimichat_users")
+          .delete()
+          .eq("nickname", nickname);
+      } catch (e) {
+        console.warn("Не удалось удалить пользователя из списка:", e);
+      }
+
+      localStorage.removeItem("dimichat_name");
+      localStorage.removeItem("dimichat_client_id");
+
+      location.reload();
+    }
+
     input.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -542,6 +668,8 @@
     });
 
     sendBtn.addEventListener("click", sendMessage);
+    deleteChatBtn.addEventListener("click", deleteCurrentChat);
+    logoutBtn.addEventListener("click", logout);
 
     async function init() {
       await ensureCurrentUserExists();
@@ -549,8 +677,9 @@
 
       if (usersCache.length && !selectedUser) {
         selectedUser = usersCache[0].nickname;
-        chatHeaderEl.textContent = "Чат с " + selectedUser;
+        chatTitleEl.textContent = "Чат с " + selectedUser;
         renderUsers();
+        updateDeleteButtonState();
         await loadConversation(true);
       } else if (!usersCache.length) {
         clearMessages();
