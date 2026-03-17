@@ -2,9 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <title>DimiChat Luxe</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root{
       --bg:#061126;
@@ -21,6 +25,10 @@
       --shadow:0 20px 60px rgba(0,0,0,.35);
       --blur:blur(18px);
       --radius:22px;
+      --top-safe: env(safe-area-inset-top, 0px);
+      --bottom-safe: env(safe-area-inset-bottom, 0px);
+      --left-safe: env(safe-area-inset-left, 0px);
+      --right-safe: env(safe-area-inset-right, 0px);
     }
 
     *{box-sizing:border-box}
@@ -35,6 +43,8 @@
         radial-gradient(circle at top right, rgba(40,199,250,.18), transparent 26%),
         linear-gradient(180deg,#061126 0%, #07132b 40%, #09162e 100%);
       overflow:hidden;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
     }
 
     .ambient{
@@ -66,7 +76,11 @@
       position:relative;
       z-index:1;
       height:100%;
-      padding:16px;
+      padding:
+        calc(16px + var(--top-safe))
+        calc(16px + var(--right-safe))
+        calc(16px + var(--bottom-safe))
+        calc(16px + var(--left-safe));
       display:grid;
       grid-template-rows:auto 1fr;
       gap:14px;
@@ -84,6 +98,7 @@
       backdrop-filter:var(--blur);
       box-shadow:var(--shadow);
       animation:fadeUp .45s ease;
+      min-width:0;
     }
 
     .brand{
@@ -91,31 +106,48 @@
       align-items:center;
       gap:14px;
       min-width:0;
+      flex:1;
     }
 
     .brand-badge{
       width:46px;height:46px;border-radius:16px;
-      background:
-        linear-gradient(135deg, rgba(124,92,255,.95), rgba(40,199,250,.9));
+      background:linear-gradient(135deg, rgba(124,92,255,.95), rgba(40,199,250,.9));
       display:grid;place-items:center;
       font-weight:800;font-size:18px;
       box-shadow:0 10px 30px rgba(124,92,255,.35);
+      flex:0 0 auto;
     }
 
     .brand-meta{
-      display:flex;flex-direction:column;gap:4px;min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
     }
 
     .brand-title{
-      font-size:18px;font-weight:800;letter-spacing:.2px;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     .brand-sub{
-      color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     .top-actions{
-      display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .user-chip{
@@ -125,6 +157,10 @@
       border:1px solid var(--line);
       color:#d9e6ff;
       font-size:13px;
+      max-width:280px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     .layout{
@@ -132,11 +168,7 @@
       display:grid;
       grid-template-columns: 340px 1fr;
       gap:14px;
-      transition:grid-template-columns .28s ease;
-    }
-
-    .layout.sidebar-collapsed{
-      grid-template-columns: 0 1fr;
+      position:relative;
     }
 
     .sidebar{
@@ -150,12 +182,6 @@
       flex-direction:column;
       overflow:hidden;
       animation:fadeUp .55s ease;
-    }
-
-    .layout.sidebar-collapsed .sidebar{
-      opacity:0;
-      transform:translateX(-14px);
-      pointer-events:none;
     }
 
     .sidebar-head{
@@ -194,6 +220,7 @@
       border:1px solid rgba(255,255,255,.08);
       color:var(--text);
       transition:.2s ease;
+      font-size:16px;
     }
 
     .search:focus{
@@ -208,6 +235,7 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      -webkit-overflow-scrolling:touch;
     }
 
     .chat-item{
@@ -236,6 +264,7 @@
       font-weight:700;
       font-size:15px;
       margin-bottom:6px;
+      word-break:break-word;
     }
 
     .chat-meta{
@@ -244,6 +273,7 @@
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+      word-break:break-word;
     }
 
     .chat-pane{
@@ -267,6 +297,7 @@
       align-items:center;
       gap:14px;
       flex-wrap:wrap;
+      min-width:0;
     }
 
     .chat-user{
@@ -274,16 +305,19 @@
       display:flex;
       flex-direction:column;
       gap:5px;
+      flex:1;
     }
 
     .chat-user-name{
       font-weight:800;
       font-size:17px;
+      word-break:break-word;
     }
 
     .chat-user-id{
       color:var(--muted);
       font-size:13px;
+      word-break:break-word;
     }
 
     .header-actions{
@@ -300,6 +334,7 @@
       flex-direction:column;
       gap:12px;
       scroll-behavior:smooth;
+      -webkit-overflow-scrolling:touch;
       background:
         linear-gradient(180deg, rgba(255,255,255,.02), transparent 22%),
         radial-gradient(circle at top center, rgba(124,92,255,.06), transparent 35%);
@@ -315,6 +350,7 @@
       box-shadow:0 10px 25px rgba(0,0,0,.12);
       animation:messageIn .28s cubic-bezier(.2,.8,.2,1);
       transform-origin:bottom left;
+      word-break:break-word;
     }
 
     .bubble.me{
@@ -331,6 +367,7 @@
       display:flex;
       justify-content:space-between;
       gap:12px;
+      flex-wrap:wrap;
     }
 
     .bubble-body{
@@ -415,6 +452,7 @@
       color:#d4e0ff;
       font-size:14px;
       animation:fadeIn .3s ease;
+      text-align:center;
     }
 
     .composer{
@@ -439,6 +477,8 @@
       border:1px solid rgba(255,255,255,.08);
       font:inherit;
       transition:.2s ease;
+      width:100%;
+      font-size:16px;
     }
 
     .composer textarea:focus{
@@ -463,6 +503,7 @@
       font-size:14px;
       cursor:pointer;
       transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+      -webkit-tap-highlight-color:transparent;
     }
 
     button:hover{transform:translateY(-1px)}
@@ -494,6 +535,22 @@
       animation:pulse 1.2s ease infinite;
     }
 
+    .mobile-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      backdrop-filter:blur(3px);
+      z-index:4;
+      opacity:0;
+      pointer-events:none;
+      transition:.25s ease;
+    }
+
+    .mobile-overlay.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
     @keyframes pulse{
       0%{box-shadow:0 0 0 0 rgba(124,92,255,.36)}
       70%{box-shadow:0 0 0 14px rgba(124,92,255,0)}
@@ -516,17 +573,156 @@
     }
 
     @media (max-width: 980px){
-      .layout{grid-template-columns:1fr}
+      .app{
+        padding:
+          calc(10px + var(--top-safe))
+          calc(10px + var(--right-safe))
+          calc(10px + var(--bottom-safe))
+          calc(10px + var(--left-safe));
+        gap:10px;
+      }
+
+      .layout{
+        grid-template-columns:1fr;
+      }
+
       .sidebar{
-        position:absolute;
-        inset:92px auto 16px 16px;
-        width:min(86vw,340px);
+        position:fixed;
+        top:calc(10px + var(--top-safe) + 72px);
+        left:calc(10px + var(--left-safe));
+        bottom:calc(10px + var(--bottom-safe));
+        width:min(88vw,340px);
         z-index:5;
+        transform:translateX(0);
+        transition:transform .28s ease, opacity .28s ease;
       }
+
       .layout.sidebar-collapsed .sidebar{
-        transform:translateX(-120%);
+        transform:translateX(-110%);
+        opacity:0;
+        pointer-events:none;
       }
-      .bubble{max-width:88%}
+
+      .chat-pane{
+        min-width:0;
+        border-radius:22px;
+      }
+
+      .bubble{
+        max-width:92%;
+      }
+
+      .topbar{
+        padding:12px;
+        border-radius:20px;
+        align-items:flex-start;
+      }
+
+      .top-actions{
+        width:100%;
+        justify-content:space-between;
+      }
+
+      .user-chip{
+        max-width:100%;
+        flex:1 1 100%;
+      }
+
+      .brand-title{
+        font-size:16px;
+      }
+
+      .brand-sub{
+        font-size:12px;
+      }
+
+      .chat-header{
+        padding:12px;
+      }
+
+      .messages{
+        padding:12px;
+      }
+
+      .composer{
+        grid-template-columns:1fr;
+        padding:12px;
+      }
+
+      .buttons-col{
+        width:100%;
+      }
+
+      .buttons-col button{
+        width:100%;
+      }
+
+      .header-actions{
+        width:100%;
+      }
+
+      .header-actions button{
+        width:100%;
+      }
+
+      .bubble-head{
+        gap:6px;
+      }
+
+      .bubble-footer{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+    }
+
+    @media (max-width: 560px){
+      .brand{
+        width:100%;
+      }
+
+      .topbar{
+        gap:10px;
+      }
+
+      .top-actions{
+        gap:8px;
+      }
+
+      .top-actions button{
+        flex:1 1 auto;
+        min-width:0;
+      }
+
+      .chat-user-name{
+        font-size:16px;
+      }
+
+      .chat-user-id{
+        font-size:12px;
+      }
+
+      .bubble{
+        padding:11px 12px 10px;
+        border-radius:18px;
+      }
+
+      .bubble-body{
+        font-size:14px;
+      }
+
+      .composer textarea{
+        min-height:52px;
+        padding:13px 14px;
+      }
+
+      .search{
+        padding:12px 13px;
+      }
+
+      button{
+        font-size:13px;
+        padding:11px 14px;
+      }
     }
   </style>
 </head>
@@ -536,6 +732,8 @@
     <div class="orb two"></div>
     <div class="orb three"></div>
   </div>
+
+  <div class="mobile-overlay" id="mobileOverlay"></div>
 
   <div class="app">
     <div class="topbar">
@@ -619,6 +817,7 @@
     const statusTextEl = document.getElementById("statusText");
     const chatNameEl = document.getElementById("chatName");
     const chatSubEl = document.getElementById("chatSub");
+    const mobileOverlayEl = document.getElementById("mobileOverlay");
 
     let nickname = localStorage.getItem("dimichat_name");
     let clientId = localStorage.getItem("dimichat_client_id");
@@ -645,12 +844,50 @@
       localStorage.setItem("dimichat_client_id", clientId);
     }
 
+    function isMobile() {
+      return window.innerWidth <= 980;
+    }
+
+    function updateOverlay() {
+      const show = isMobile() && !layoutEl.classList.contains("sidebar-collapsed");
+      mobileOverlayEl.classList.toggle("show", show);
+    }
+
+    function closeSidebarMobile() {
+      if (isMobile()) {
+        layoutEl.classList.add("sidebar-collapsed");
+        toggleSidebarBtn.textContent = "Показать чаты";
+        updateOverlay();
+      }
+    }
+
+    function openSidebarMobile() {
+      if (isMobile()) {
+        layoutEl.classList.remove("sidebar-collapsed");
+        toggleSidebarBtn.textContent = "Скрыть чаты";
+        updateOverlay();
+      }
+    }
+
+    function syncResponsiveState() {
+      if (isMobile()) {
+        if (!layoutEl.dataset.mobileInitialized) {
+          layoutEl.classList.add("sidebar-collapsed");
+          layoutEl.dataset.mobileInitialized = "1";
+        }
+      } else {
+        layoutEl.classList.remove("sidebar-collapsed");
+      }
+      toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
+        ? "Показать чаты"
+        : "Скрыть чаты";
+      updateOverlay();
+    }
+
     function randomShortId() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let out = "";
-      for (let i = 0; i < 6; i++) {
-        out += chars[Math.floor(Math.random() * chars.length)];
-      }
+      for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
       return out;
     }
 
@@ -662,7 +899,6 @@
           .select("id")
           .eq("short_id", shortId)
           .maybeSingle();
-
         if (error) continue;
         if (!data) return shortId;
       }
@@ -807,17 +1043,13 @@
       if (!bubble) return;
 
       const reactionsContainer = bubble.querySelector(`#reactions-${messageId}`);
-      if (reactionsContainer) {
-        reactionsContainer.innerHTML = renderReactions(messageId);
-      }
+      if (reactionsContainer) reactionsContainer.innerHTML = renderReactions(messageId);
 
       const oldPicker = bubble.querySelector(".reaction-picker");
       if (oldPicker) oldPicker.remove();
 
       const footer = bubble.querySelector(".bubble-footer");
-      if (footer) {
-        footer.insertAdjacentHTML("afterend", renderReactionPicker(messageId));
-      }
+      if (footer) footer.insertAdjacentHTML("afterend", renderReactionPicker(messageId));
     }
 
     function filterUsers() {
@@ -862,10 +1094,7 @@
           updateChatHeader();
           renderUsers();
           await loadConversation(true);
-          if (window.innerWidth <= 980) {
-            layoutEl.classList.add("sidebar-collapsed");
-            toggleSidebarBtn.textContent = "Показать чаты";
-          }
+          closeSidebarMobile();
         });
         usersListEl.appendChild(item);
       });
@@ -985,9 +1214,7 @@
 
       if (initial) {
         clearMessages();
-        if (!data || !data.length) {
-          addSystem("Начни диалог первым.");
-        }
+        if (!data || !data.length) addSystem("Начни диалог первым.");
       }
 
       for (const msg of (data || [])) addMessage(msg);
@@ -1029,9 +1256,7 @@
           .eq("emoji", emoji)
           .eq("reactor", nickname);
 
-        if (error) {
-          console.error("Ошибка удаления реакции:", error);
-        }
+        if (error) console.error("Ошибка удаления реакции:", error);
         return;
       }
 
@@ -1039,9 +1264,7 @@
         .from("message_reactions")
         .insert([{ message_id: messageId, reactor: nickname, emoji }]);
 
-      if (error) {
-        console.error("Ошибка добавления реакции:", error);
-      }
+      if (error) console.error("Ошибка добавления реакции:", error);
     }
 
     async function sendMessage() {
@@ -1070,9 +1293,7 @@
         return;
       }
 
-      if (data && isMessageForSelectedDialog(data)) {
-        addMessage(data);
-      }
+      if (data && isMessageForSelectedDialog(data)) addMessage(data);
 
       textEl.value = "";
       autosizeTextarea();
@@ -1123,12 +1344,13 @@
         toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
           ? "Показать чаты"
           : "Скрыть чаты";
+        updateOverlay();
       });
 
+      mobileOverlayEl.addEventListener("click", closeSidebarMobile);
       sendBtn.addEventListener("click", sendMessage);
       deleteChatBtn.addEventListener("click", deleteCurrentChat);
       logoutBtn.addEventListener("click", logout);
-
       searchNameEl.addEventListener("input", renderUsers);
       searchIdEl.addEventListener("input", renderUsers);
 
@@ -1166,6 +1388,8 @@
           await toggleReaction(messageId, emoji);
         }
       });
+
+      window.addEventListener("resize", syncResponsiveState);
     }
 
     const messagesChannel = client
@@ -1197,9 +1421,7 @@
       }, async () => {
         await loadUsers();
       })
-      .subscribe((status) => {
-        console.log("users-live:", status);
-      });
+      .subscribe();
 
     const reactionsChannel = client
       .channel("reactions-live")
@@ -1221,14 +1443,14 @@
           rerenderMessageReactions(messageId);
         }
       })
-      .subscribe((status) => {
-        console.log("reactions-live:", status);
-      });
+      .subscribe();
 
     async function init() {
       setupEvents();
       updateMeChip();
       autosizeTextarea();
+      syncResponsiveState();
+
       await ensureCurrentUserExists();
       await loadUsers();
 
@@ -1244,9 +1466,7 @@
 
       pollingInterval = setInterval(async () => {
         await loadUsers();
-        if (selectedUser) {
-          await loadConversation(false);
-        }
+        if (selectedUser) await loadConversation(false);
       }, 1200);
     }
 
