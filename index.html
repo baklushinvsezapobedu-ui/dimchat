@@ -2,10 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DimiChat Luxe</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -13,18 +10,16 @@
     :root{
       --bg:#061126;
       --bg2:#0a1733;
-      --panel:rgba(13,25,56,.78);
-      --panel-2:rgba(18,33,73,.82);
+      --panel:rgba(13,25,56,.82);
+      --panel-2:rgba(18,33,73,.86);
       --line:rgba(255,255,255,.08);
       --text:#eef4ff;
       --muted:#9fb3df;
       --accent:#7c5cff;
       --accent-2:#28c7fa;
       --danger:#d83f68;
-      --success:#2bd4a7;
       --shadow:0 20px 60px rgba(0,0,0,.35);
       --blur:blur(18px);
-      --radius:22px;
       --top-safe: env(safe-area-inset-top, 0px);
       --bottom-safe: env(safe-area-inset-bottom, 0px);
       --left-safe: env(safe-area-inset-left, 0px);
@@ -77,40 +72,39 @@
       z-index:1;
       height:100%;
       padding:
-        calc(16px + var(--top-safe))
-        calc(16px + var(--right-safe))
-        calc(16px + var(--bottom-safe))
-        calc(16px + var(--left-safe));
+        calc(14px + var(--top-safe))
+        calc(14px + var(--right-safe))
+        calc(14px + var(--bottom-safe))
+        calc(14px + var(--left-safe));
       display:grid;
       grid-template-rows:auto 1fr;
-      gap:14px;
+      gap:12px;
     }
 
     .topbar{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      gap:14px;
-      padding:16px 18px;
+      gap:12px;
+      padding:14px 16px;
       border:1px solid var(--line);
-      border-radius:24px;
+      border-radius:22px;
       background:rgba(10,22,50,.72);
       backdrop-filter:var(--blur);
       box-shadow:var(--shadow);
-      animation:fadeUp .45s ease;
       min-width:0;
     }
 
     .brand{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:12px;
       min-width:0;
       flex:1;
     }
 
     .brand-badge{
-      width:46px;height:46px;border-radius:16px;
+      width:44px;height:44px;border-radius:15px;
       background:linear-gradient(135deg, rgba(124,92,255,.95), rgba(40,199,250,.9));
       display:grid;place-items:center;
       font-weight:800;font-size:18px;
@@ -128,7 +122,6 @@
     .brand-title{
       font-size:18px;
       font-weight:800;
-      letter-spacing:.2px;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -145,19 +138,19 @@
     .top-actions{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
 
     .user-chip{
-      padding:10px 14px;
-      border-radius:16px;
+      padding:10px 12px;
+      border-radius:15px;
       background:rgba(255,255,255,.06);
       border:1px solid var(--line);
       color:#d9e6ff;
       font-size:13px;
-      max-width:280px;
+      max-width:300px;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -166,37 +159,30 @@
     .layout{
       min-height:0;
       display:grid;
-      grid-template-columns: 340px 1fr;
-      gap:14px;
+      grid-template-columns:340px 1fr;
+      gap:12px;
       position:relative;
     }
 
     .sidebar{
       min-width:0;
       border:1px solid var(--line);
-      border-radius:26px;
+      border-radius:24px;
       background:var(--panel);
       backdrop-filter:var(--blur);
       box-shadow:var(--shadow);
       display:flex;
       flex-direction:column;
       overflow:hidden;
-      animation:fadeUp .55s ease;
+      transition:transform .28s ease, opacity .28s ease;
     }
 
     .sidebar-head{
-      padding:18px;
+      padding:16px;
       border-bottom:1px solid var(--line);
       display:flex;
       flex-direction:column;
-      gap:14px;
-    }
-
-    .sidebar-topline{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
+      gap:12px;
     }
 
     .sidebar-title{
@@ -219,13 +205,7 @@
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
       color:var(--text);
-      transition:.2s ease;
       font-size:16px;
-    }
-
-    .search:focus{
-      border-color:rgba(124,92,255,.55);
-      box-shadow:0 0 0 4px rgba(124,92,255,.12);
     }
 
     .sidebar-body{
@@ -245,7 +225,6 @@
       border:1px solid rgba(255,255,255,.06);
       cursor:pointer;
       transition:transform .18s ease, background .18s ease, border-color .18s ease;
-      animation:fadeIn .32s ease;
     }
 
     .chat-item:hover{
@@ -279,23 +258,22 @@
     .chat-pane{
       min-width:0;
       border:1px solid var(--line);
-      border-radius:26px;
+      border-radius:24px;
       background:var(--panel-2);
       backdrop-filter:var(--blur);
       box-shadow:var(--shadow);
       display:grid;
       grid-template-rows:auto 1fr auto;
       overflow:hidden;
-      animation:fadeUp .65s ease;
     }
 
     .chat-header{
-      padding:16px 18px;
+      padding:16px;
       border-bottom:1px solid var(--line);
       display:flex;
       justify-content:space-between;
       align-items:center;
-      gap:14px;
+      gap:12px;
       flex-wrap:wrap;
       min-width:0;
     }
@@ -304,13 +282,13 @@
       min-width:0;
       display:flex;
       flex-direction:column;
-      gap:5px;
+      gap:4px;
       flex:1;
     }
 
     .chat-user-name{
       font-weight:800;
-      font-size:17px;
+      font-size:18px;
       word-break:break-word;
     }
 
@@ -329,7 +307,7 @@
     .messages{
       min-height:0;
       overflow:auto;
-      padding:18px;
+      padding:16px;
       display:flex;
       flex-direction:column;
       gap:12px;
@@ -386,11 +364,6 @@
       flex-wrap:wrap;
     }
 
-    .bubble-time{
-      font-size:11px;
-      color:#98abd8;
-    }
-
     .reactions{
       display:flex;
       gap:6px;
@@ -407,11 +380,9 @@
       font-size:13px;
       border-radius:999px;
       cursor:pointer;
-      transition:.18s ease;
       border:1px solid rgba(255,255,255,.07);
     }
 
-    .reaction:hover{transform:translateY(-1px)}
     .reaction.mine{
       background:rgba(124,92,255,.25);
       border-color:rgba(124,92,255,.5);
@@ -433,13 +404,7 @@
       padding:7px 9px;
       min-width:auto;
       cursor:pointer;
-      transition:.18s ease;
       font-size:16px;
-    }
-
-    .picker-btn:hover{
-      transform:scale(1.08);
-      background:rgba(255,255,255,.12);
     }
 
     .system{
@@ -451,7 +416,6 @@
       border:1px solid rgba(255,255,255,.08);
       color:#d4e0ff;
       font-size:14px;
-      animation:fadeIn .3s ease;
       text-align:center;
     }
 
@@ -476,14 +440,8 @@
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
       font:inherit;
-      transition:.2s ease;
       width:100%;
       font-size:16px;
-    }
-
-    .composer textarea:focus{
-      border-color:rgba(40,199,250,.45);
-      box-shadow:0 0 0 4px rgba(40,199,250,.1);
     }
 
     .buttons-col{
@@ -506,8 +464,11 @@
       -webkit-tap-highlight-color:transparent;
     }
 
-    button:hover{transform:translateY(-1px)}
-    button:disabled{opacity:.58;cursor:not-allowed;transform:none}
+    button:disabled{
+      opacity:.58;
+      cursor:not-allowed;
+      transform:none;
+    }
 
     .primary{
       background:linear-gradient(135deg, var(--accent), #5fa5ff);
@@ -517,7 +478,6 @@
     .secondary{
       background:rgba(255,255,255,.08);
       border:1px solid rgba(255,255,255,.08);
-      box-shadow:none;
     }
 
     .danger{
@@ -557,16 +517,6 @@
       100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}
     }
 
-    @keyframes fadeUp{
-      from{opacity:0;transform:translateY(10px)}
-      to{opacity:1;transform:translateY(0)}
-    }
-
-    @keyframes fadeIn{
-      from{opacity:0}
-      to{opacity:1}
-    }
-
     @keyframes messageIn{
       from{opacity:0;transform:translateY(10px) scale(.98)}
       to{opacity:1;transform:translateY(0) scale(1)}
@@ -588,28 +538,18 @@
 
       .sidebar{
         position:fixed;
-        top:calc(10px + var(--top-safe) + 72px);
+        top:calc(10px + var(--top-safe) + 78px);
         left:calc(10px + var(--left-safe));
         bottom:calc(10px + var(--bottom-safe));
         width:min(88vw,340px);
         z-index:5;
         transform:translateX(0);
-        transition:transform .28s ease, opacity .28s ease;
       }
 
       .layout.sidebar-collapsed .sidebar{
         transform:translateX(-110%);
         opacity:0;
         pointer-events:none;
-      }
-
-      .chat-pane{
-        min-width:0;
-        border-radius:22px;
-      }
-
-      .bubble{
-        max-width:92%;
       }
 
       .topbar{
@@ -628,20 +568,33 @@
         flex:1 1 100%;
       }
 
-      .brand-title{
-        font-size:16px;
-      }
-
-      .brand-sub{
-        font-size:12px;
+      .chat-pane{
+        border-radius:22px;
       }
 
       .chat-header{
         padding:12px;
       }
 
+      .header-actions{
+        width:100%;
+      }
+
+      .header-actions button{
+        width:100%;
+      }
+
       .messages{
         padding:12px;
+      }
+
+      .bubble{
+        max-width:92%;
+      }
+
+      .bubble-footer{
+        flex-direction:column;
+        align-items:flex-start;
       }
 
       .composer{
@@ -655,23 +608,6 @@
 
       .buttons-col button{
         width:100%;
-      }
-
-      .header-actions{
-        width:100%;
-      }
-
-      .header-actions button{
-        width:100%;
-      }
-
-      .bubble-head{
-        gap:6px;
-      }
-
-      .bubble-footer{
-        flex-direction:column;
-        align-items:flex-start;
       }
     }
 
@@ -747,7 +683,7 @@
 
       <div class="top-actions">
         <div class="user-chip" id="meChip">Ты: —</div>
-        <button class="ghost" id="toggleSidebarBtn">Скрыть чаты</button>
+        <button class="ghost" id="toggleSidebarBtn">Чаты</button>
         <button class="secondary" id="logoutBtn">Выйти</button>
       </div>
     </div>
@@ -755,10 +691,7 @@
     <div class="layout" id="layout">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-head">
-          <div class="sidebar-topline">
-            <div class="sidebar-title">Личные чаты</div>
-          </div>
-
+          <div class="sidebar-title">Личные чаты</div>
           <div class="search-wrap">
             <input id="searchName" class="search" placeholder="Поиск по имени" />
             <input id="searchId" class="search" placeholder="Поиск по ID, например A7K2QF" />
@@ -787,7 +720,7 @@
         <div class="composer">
           <textarea id="text" placeholder="Напиши сообщение..."></textarea>
           <div class="buttons-col">
-            <button class="primary pulse" id="sendBtn">Отправить</button>
+            <button class="primary pulse" id="sendBtn" disabled>Отправить</button>
           </div>
         </div>
       </section>
@@ -803,7 +736,6 @@
     const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const layoutEl = document.getElementById("layout");
-    const sidebarEl = document.getElementById("sidebar");
     const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const deleteChatBtn = document.getElementById("deleteChatBtn");
@@ -853,18 +785,18 @@
       mobileOverlayEl.classList.toggle("show", show);
     }
 
-    function closeSidebarMobile() {
-      if (isMobile()) {
-        layoutEl.classList.add("sidebar-collapsed");
-        toggleSidebarBtn.textContent = "Показать чаты";
-        updateOverlay();
-      }
-    }
-
     function openSidebarMobile() {
       if (isMobile()) {
         layoutEl.classList.remove("sidebar-collapsed");
         toggleSidebarBtn.textContent = "Скрыть чаты";
+        updateOverlay();
+      }
+    }
+
+    function closeSidebarMobile() {
+      if (isMobile()) {
+        layoutEl.classList.add("sidebar-collapsed");
+        toggleSidebarBtn.textContent = "Чаты";
         updateOverlay();
       }
     }
@@ -878,9 +810,11 @@
       } else {
         layoutEl.classList.remove("sidebar-collapsed");
       }
+
       toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
-        ? "Показать чаты"
+        ? "Чаты"
         : "Скрыть чаты";
+
       updateOverlay();
     }
 
@@ -936,6 +870,14 @@
 
     function updateMeChip() {
       meChipEl.textContent = `Ты: ${nickname} • ID: ${myShortId || "—"}`;
+    }
+
+    function updateButtonsState() {
+      const hasSelectedUser = !!selectedUser;
+      const hasText = !!textEl.value.trim();
+
+      sendBtn.disabled = !hasSelectedUser || !hasText || isSending;
+      deleteChatBtn.disabled = !hasSelectedUser || isDeleting;
     }
 
     function addSystem(text) {
@@ -1088,14 +1030,17 @@
             <span>Личный чат</span>
           </div>
         `;
+
         item.addEventListener("click", async () => {
           selectedUser = user;
           openReactionPickerFor = null;
           updateChatHeader();
+          updateButtonsState();
           renderUsers();
           await loadConversation(true);
           closeSidebarMobile();
         });
+
         usersListEl.appendChild(item);
       });
     }
@@ -1104,12 +1049,13 @@
       if (!selectedUser) {
         chatNameEl.textContent = "Выбери пользователя";
         chatSubEl.textContent = "Личные сообщения и реакции";
-        deleteChatBtn.disabled = true;
+        updateButtonsState();
         return;
       }
+
       chatNameEl.textContent = selectedUser.nickname;
       chatSubEl.textContent = `ID: ${selectedUser.short_id || "—"}`;
-      deleteChatBtn.disabled = false;
+      updateButtonsState();
     }
 
     async function ensureCurrentUserExists() {
@@ -1187,6 +1133,7 @@
       if (!selectedUser) {
         clearMessages();
         addSystem("Выбери пользователя слева, чтобы начать диалог.");
+        updateButtonsState();
         return;
       }
 
@@ -1209,6 +1156,7 @@
           clearMessages();
           addSystem("Не удалось загрузить переписку.");
         }
+        updateButtonsState();
         return;
       }
 
@@ -1219,6 +1167,7 @@
 
       for (const msg of (data || [])) addMessage(msg);
       await loadReactionsForVisibleMessages();
+      updateButtonsState();
     }
 
     async function loadReactionsForVisibleMessages() {
@@ -1269,10 +1218,13 @@
 
     async function sendMessage() {
       const text = textEl.value.trim();
-      if (!text || !selectedUser || isSending) return;
+      if (!text || !selectedUser || isSending) {
+        updateButtonsState();
+        return;
+      }
 
       isSending = true;
-      sendBtn.disabled = true;
+      updateButtonsState();
 
       const { data, error } = await client
         .from("private_messages")
@@ -1285,7 +1237,7 @@
         .single();
 
       isSending = false;
-      sendBtn.disabled = false;
+      updateButtonsState();
 
       if (error) {
         console.error("Ошибка отправки:", error);
@@ -1297,6 +1249,7 @@
 
       textEl.value = "";
       autosizeTextarea();
+      updateButtonsState();
       textEl.focus();
     }
 
@@ -1305,7 +1258,7 @@
       if (!confirm(`Удалить весь чат с ${selectedUser.nickname}?`)) return;
 
       isDeleting = true;
-      deleteChatBtn.disabled = true;
+      updateButtonsState();
 
       const { error } = await client
         .from("private_messages")
@@ -1313,7 +1266,7 @@
         .or(currentDialogFilter());
 
       isDeleting = false;
-      deleteChatBtn.disabled = false;
+      updateButtonsState();
 
       if (error) {
         console.error("Ошибка удаления чата:", error);
@@ -1340,21 +1293,28 @@
 
     function setupEvents() {
       toggleSidebarBtn.addEventListener("click", () => {
-        layoutEl.classList.toggle("sidebar-collapsed");
-        toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
-          ? "Показать чаты"
-          : "Скрыть чаты";
-        updateOverlay();
+        if (layoutEl.classList.contains("sidebar-collapsed")) {
+          openSidebarMobile();
+        } else {
+          layoutEl.classList.add("sidebar-collapsed");
+          toggleSidebarBtn.textContent = isMobile() ? "Чаты" : "Чаты";
+          updateOverlay();
+        }
       });
 
       mobileOverlayEl.addEventListener("click", closeSidebarMobile);
       sendBtn.addEventListener("click", sendMessage);
       deleteChatBtn.addEventListener("click", deleteCurrentChat);
       logoutBtn.addEventListener("click", logout);
+
       searchNameEl.addEventListener("input", renderUsers);
       searchIdEl.addEventListener("input", renderUsers);
 
-      textEl.addEventListener("input", autosizeTextarea);
+      textEl.addEventListener("input", () => {
+        autosizeTextarea();
+        updateButtonsState();
+      });
+
       textEl.addEventListener("keydown", async (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
@@ -1408,7 +1368,6 @@
         }
       })
       .subscribe((status) => {
-        console.log("private-messages-live:", status);
         setStatus("Статус: " + status);
       });
 
@@ -1450,6 +1409,7 @@
       updateMeChip();
       autosizeTextarea();
       syncResponsiveState();
+      updateButtonsState();
 
       await ensureCurrentUserExists();
       await loadUsers();
@@ -1463,6 +1423,8 @@
         clearMessages();
         addSystem("Пока нет других пользователей. Зайди с другого устройства или под другим именем.");
       }
+
+      updateButtonsState();
 
       pollingInterval = setInterval(async () => {
         await loadUsers();
