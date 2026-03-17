@@ -3,323 +3,671 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DimiChat Private</title>
+  <title>DimiChat Luxe</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    * {
-      box-sizing: border-box;
+    :root{
+      --bg:#061126;
+      --bg2:#0a1733;
+      --panel:rgba(13,25,56,.78);
+      --panel-2:rgba(18,33,73,.82);
+      --line:rgba(255,255,255,.08);
+      --text:#eef4ff;
+      --muted:#9fb3df;
+      --accent:#7c5cff;
+      --accent-2:#28c7fa;
+      --danger:#d83f68;
+      --success:#2bd4a7;
+      --shadow:0 20px 60px rgba(0,0,0,.35);
+      --blur:blur(18px);
+      --radius:22px;
     }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #071433;
-      color: white;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124,92,255,.25), transparent 28%),
+        radial-gradient(circle at top right, rgba(40,199,250,.18), transparent 26%),
+        linear-gradient(180deg,#061126 0%, #07132b 40%, #09162e 100%);
+      overflow:hidden;
     }
 
-    .top {
-      background: #0b1b44;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 18px;
-      gap: 12px;
-      flex-wrap: wrap;
+    .ambient{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      overflow:hidden;
     }
 
-    .top-left {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .orb{
+      position:absolute;
+      border-radius:50%;
+      filter:blur(60px);
+      opacity:.35;
+      animation: drift 14s ease-in-out infinite alternate;
     }
 
-    .top-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      font-size: 14px;
-      color: #c7d2fe;
+    .orb.one{width:280px;height:280px;background:#7c5cff;left:-60px;top:20px}
+    .orb.two{width:320px;height:320px;background:#28c7fa;right:-90px;top:80px;animation-duration:17s}
+    .orb.three{width:240px;height:240px;background:#2bd4a7;left:30%;bottom:-100px;animation-duration:20s}
+
+    @keyframes drift{
+      from{transform:translateY(0) translateX(0) scale(1)}
+      to{transform:translateY(30px) translateX(20px) scale(1.08)}
     }
 
-    .top-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .app{
+      position:relative;
+      z-index:1;
+      height:100%;
+      padding:16px;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:14px;
     }
 
-    .main {
-      flex: 1;
-      display: flex;
-      min-height: 0;
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      padding:16px 18px;
+      border:1px solid var(--line);
+      border-radius:24px;
+      background:rgba(10,22,50,.72);
+      backdrop-filter:var(--blur);
+      box-shadow:var(--shadow);
+      animation:fadeUp .45s ease;
     }
 
-    .sidebar {
-      width: 320px;
-      background: #0e214f;
-      border-right: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
     }
 
-    .sidebar-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-weight: bold;
-      color: #dbeafe;
+    .brand-badge{
+      width:46px;height:46px;border-radius:16px;
+      background:
+        linear-gradient(135deg, rgba(124,92,255,.95), rgba(40,199,250,.9));
+      display:grid;place-items:center;
+      font-weight:800;font-size:18px;
+      box-shadow:0 10px 30px rgba(124,92,255,.35);
     }
 
-    .users-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .brand-meta{
+      display:flex;flex-direction:column;gap:4px;min-width:0;
     }
 
-    .user-item {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 12px;
-      cursor: pointer;
-      transition: 0.2s ease;
+    .brand-title{
+      font-size:18px;font-weight:800;letter-spacing:.2px;
     }
 
-    .user-item:hover {
-      background: rgba(255,255,255,0.1);
+    .brand-sub{
+      color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
 
-    .user-item.active {
-      background: #1c3b84;
-      border-color: rgba(255,255,255,0.2);
+    .top-actions{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;
     }
 
-    .user-name {
-      font-size: 15px;
-      font-weight: bold;
+    .user-chip{
+      padding:10px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:#d9e6ff;
+      font-size:13px;
     }
 
-    .user-sub {
-      font-size: 12px;
-      color: #a5b4fc;
-      margin-top: 4px;
+    .layout{
+      min-height:0;
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:14px;
+      transition:grid-template-columns .28s ease;
     }
 
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 0;
+    .layout.sidebar-collapsed{
+      grid-template-columns: 0 1fr;
     }
 
-    .chat-header {
-      background: #102554;
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      color: #dbeafe;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+    .sidebar{
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:26px;
+      background:var(--panel);
+      backdrop-filter:var(--blur);
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      animation:fadeUp .55s ease;
     }
 
-    .chat-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .layout.sidebar-collapsed .sidebar{
+      opacity:0;
+      transform:translateX(-14px);
+      pointer-events:none;
     }
 
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 0;
+    .sidebar-head{
+      padding:18px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
     }
 
-    .message {
-      background: #13275c;
-      padding: 12px;
-      border-radius: 10px;
-      max-width: 70%;
-      word-break: break-word;
+    .sidebar-topline{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
     }
 
-    .message.me {
-      align-self: flex-end;
-      background: #1c3b84;
+    .sidebar-title{
+      font-size:18px;
+      font-weight:800;
     }
 
-    .author {
-      font-size: 12px;
-      color: #a5b4fc;
-      margin-bottom: 4px;
+    .search-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
-    .meta {
-      font-size: 11px;
-      color: #93a4d4;
-      margin-top: 6px;
+    .search{
+      width:100%;
+      border:none;
+      outline:none;
+      padding:13px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color:var(--text);
+      transition:.2s ease;
     }
 
-    .system {
-      background: rgba(255,255,255,0.1);
-      align-self: center;
-      text-align: center;
-      max-width: 90%;
+    .search:focus{
+      border-color:rgba(124,92,255,.55);
+      box-shadow:0 0 0 4px rgba(124,92,255,.12);
     }
 
-    .send {
-      display: flex;
-      gap: 10px;
-      padding: 15px;
-      background: #0b1b44;
-      border-top: 1px solid rgba(255,255,255,0.08);
+    .sidebar-body{
+      min-height:0;
+      overflow:auto;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
-    .send input {
-      flex: 1;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      outline: none;
+    .chat-item{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.045);
+      border:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      transition:transform .18s ease, background .18s ease, border-color .18s ease;
+      animation:fadeIn .32s ease;
     }
 
-    button {
-      padding: 12px 16px;
-      background: #5b5be6;
-      border: none;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      min-width: 120px;
+    .chat-item:hover{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.07);
+      border-color:rgba(255,255,255,.12);
     }
 
-    button:hover {
-      opacity: 0.95;
+    .chat-item.active{
+      background:linear-gradient(135deg, rgba(124,92,255,.25), rgba(40,199,250,.14));
+      border-color:rgba(124,92,255,.45);
+      box-shadow:0 12px 30px rgba(124,92,255,.16);
     }
 
-    button:disabled {
-      opacity: .6;
-      cursor: not-allowed;
+    .chat-name{
+      font-weight:700;
+      font-size:15px;
+      margin-bottom:6px;
     }
 
-    .danger {
-      background: #b91c1c;
+    .chat-meta{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
     }
 
-    .secondary {
-      background: #334155;
+    .chat-pane{
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:26px;
+      background:var(--panel-2);
+      backdrop-filter:var(--blur);
+      box-shadow:var(--shadow);
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      overflow:hidden;
+      animation:fadeUp .65s ease;
     }
 
-    @media (max-width: 900px) {
-      .main {
-        flex-direction: column;
+    .chat-header{
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .chat-user{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+    }
+
+    .chat-user-name{
+      font-weight:800;
+      font-size:17px;
+    }
+
+    .chat-user-id{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .header-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .messages{
+      min-height:0;
+      overflow:auto;
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      scroll-behavior:smooth;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.02), transparent 22%),
+        radial-gradient(circle at top center, rgba(124,92,255,.06), transparent 35%);
+    }
+
+    .bubble{
+      max-width:min(72%, 680px);
+      padding:12px 14px 10px;
+      border-radius:20px;
+      position:relative;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 10px 25px rgba(0,0,0,.12);
+      animation:messageIn .28s cubic-bezier(.2,.8,.2,1);
+      transform-origin:bottom left;
+    }
+
+    .bubble.me{
+      align-self:flex-end;
+      background:linear-gradient(135deg, rgba(124,92,255,.34), rgba(40,199,250,.16));
+      border-color:rgba(124,92,255,.4);
+      transform-origin:bottom right;
+    }
+
+    .bubble-head{
+      font-size:12px;
+      color:#b8c8ee;
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .bubble-body{
+      font-size:15px;
+      line-height:1.45;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .bubble-footer{
+      margin-top:8px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .bubble-time{
+      font-size:11px;
+      color:#98abd8;
+    }
+
+    .reactions{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .reaction{
+      border:none;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      padding:6px 9px;
+      min-width:auto;
+      font-size:13px;
+      border-radius:999px;
+      cursor:pointer;
+      transition:.18s ease;
+      border:1px solid rgba(255,255,255,.07);
+    }
+
+    .reaction:hover{transform:translateY(-1px)}
+    .reaction.mine{
+      background:rgba(124,92,255,.25);
+      border-color:rgba(124,92,255,.5);
+    }
+
+    .reaction-picker{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px dashed rgba(255,255,255,.08);
+    }
+
+    .picker-btn{
+      border:none;
+      background:rgba(255,255,255,.06);
+      border-radius:12px;
+      padding:7px 9px;
+      min-width:auto;
+      cursor:pointer;
+      transition:.18s ease;
+      font-size:16px;
+    }
+
+    .picker-btn:hover{
+      transform:scale(1.08);
+      background:rgba(255,255,255,.12);
+    }
+
+    .system{
+      align-self:center;
+      max-width:90%;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.08);
+      color:#d4e0ff;
+      font-size:14px;
+      animation:fadeIn .3s ease;
+    }
+
+    .composer{
+      border-top:1px solid var(--line);
+      padding:14px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      background:rgba(8,18,42,.6);
+    }
+
+    .composer textarea{
+      resize:none;
+      min-height:56px;
+      max-height:140px;
+      border:none;
+      outline:none;
+      padding:15px 16px;
+      border-radius:18px;
+      color:var(--text);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      font:inherit;
+      transition:.2s ease;
+    }
+
+    .composer textarea:focus{
+      border-color:rgba(40,199,250,.45);
+      box-shadow:0 0 0 4px rgba(40,199,250,.1);
+    }
+
+    .buttons-col{
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+    }
+
+    button{
+      border:none;
+      outline:none;
+      padding:12px 16px;
+      min-width:110px;
+      border-radius:16px;
+      color:white;
+      font-weight:700;
+      font-size:14px;
+      cursor:pointer;
+      transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
+    }
+
+    button:hover{transform:translateY(-1px)}
+    button:disabled{opacity:.58;cursor:not-allowed;transform:none}
+
+    .primary{
+      background:linear-gradient(135deg, var(--accent), #5fa5ff);
+      box-shadow:0 12px 30px rgba(124,92,255,.26);
+    }
+
+    .secondary{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:none;
+    }
+
+    .danger{
+      background:linear-gradient(135deg, #d83f68, #b51743);
+      box-shadow:0 12px 30px rgba(216,63,104,.22);
+    }
+
+    .ghost{
+      background:rgba(255,255,255,.06);
+      min-width:auto;
+      padding:11px 14px;
+    }
+
+    .pulse{
+      animation:pulse 1.2s ease infinite;
+    }
+
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(124,92,255,.36)}
+      70%{box-shadow:0 0 0 14px rgba(124,92,255,0)}
+      100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0}
+      to{opacity:1}
+    }
+
+    @keyframes messageIn{
+      from{opacity:0;transform:translateY(10px) scale(.98)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{
+        position:absolute;
+        inset:92px auto 16px 16px;
+        width:min(86vw,340px);
+        z-index:5;
       }
-
-      .sidebar {
-        width: 100%;
-        height: 220px;
-        min-height: 220px;
+      .layout.sidebar-collapsed .sidebar{
+        transform:translateX(-120%);
       }
-
-      .message {
-        max-width: 88%;
-      }
+      .bubble{max-width:88%}
     }
   </style>
 </head>
 <body>
-  <div class="top">
-    <div class="top-left">
-      <div><strong>DimiChat</strong></div>
-      <div id="roomState" style="font-size:13px;color:#93c5fd;">Подключение...</div>
-    </div>
-
-    <div class="top-right">
-      <div id="nickname"></div>
-      <div class="top-actions">
-        <button id="logoutBtn" class="secondary">Выйти</button>
-      </div>
-    </div>
+  <div class="ambient">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
   </div>
 
-  <div class="main">
-    <aside class="sidebar">
-      <div class="sidebar-header">Чаты</div>
-      <div id="usersList" class="users-list"></div>
-    </aside>
-
-    <section class="chat-area">
-      <div id="chatHeader" class="chat-header">
-        <span id="chatTitle">Выбери пользователя слева</span>
-        <div class="chat-actions">
-          <button id="deleteChatBtn" class="danger" disabled>Удалить чат</button>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-badge">D</div>
+        <div class="brand-meta">
+          <div class="brand-title">DimiChat Luxe</div>
+          <div class="brand-sub" id="statusText">Подключение...</div>
         </div>
       </div>
 
-      <div id="messages" class="messages">
-        <div class="message system">Здесь будут личные сообщения</div>
+      <div class="top-actions">
+        <div class="user-chip" id="meChip">Ты: —</div>
+        <button class="ghost" id="toggleSidebarBtn">Скрыть чаты</button>
+        <button class="secondary" id="logoutBtn">Выйти</button>
       </div>
+    </div>
 
-      <div class="send">
-        <input id="text" placeholder="Напиши сообщение" autocomplete="off" maxlength="1000" />
-        <button id="sendBtn">Отправить</button>
-      </div>
-    </section>
+    <div class="layout" id="layout">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-head">
+          <div class="sidebar-topline">
+            <div class="sidebar-title">Личные чаты</div>
+          </div>
+
+          <div class="search-wrap">
+            <input id="searchName" class="search" placeholder="Поиск по имени" />
+            <input id="searchId" class="search" placeholder="Поиск по ID, например A7K2QF" />
+          </div>
+        </div>
+
+        <div class="sidebar-body" id="usersList"></div>
+      </aside>
+
+      <section class="chat-pane">
+        <div class="chat-header">
+          <div class="chat-user">
+            <div class="chat-user-name" id="chatName">Выбери пользователя</div>
+            <div class="chat-user-id" id="chatSub">Личные сообщения и реакции</div>
+          </div>
+
+          <div class="header-actions">
+            <button class="danger" id="deleteChatBtn" disabled>Удалить чат</button>
+          </div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="system">Выбери пользователя слева, чтобы начать диалог.</div>
+        </div>
+
+        <div class="composer">
+          <textarea id="text" placeholder="Напиши сообщение..."></textarea>
+          <div class="buttons-col">
+            <button class="primary pulse" id="sendBtn">Отправить</button>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://fftzhwgulytcdyaplszt.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdHpod2d1bHl0Y2R5YXBsc3p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4ODUsImV4cCI6MjA4OTI0Mjg4NX0.hqjbhMlIYPCARVjRq7qtFWvN88quKjUqRnckbW9V0kI";
+    const EMOJIS = ["❤️","👍","🔥","😂","😍","😮","👏","😢"];
 
     const { createClient } = window.supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const messagesBox = document.getElementById("messages");
-    const input = document.getElementById("text");
-    const sendBtn = document.getElementById("sendBtn");
-    const nicknameEl = document.getElementById("nickname");
-    const roomStateEl = document.getElementById("roomState");
-    const usersListEl = document.getElementById("usersList");
-    const chatTitleEl = document.getElementById("chatTitle");
+    const layoutEl = document.getElementById("layout");
+    const sidebarEl = document.getElementById("sidebar");
+    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const deleteChatBtn = document.getElementById("deleteChatBtn");
+    const usersListEl = document.getElementById("usersList");
+    const messagesEl = document.getElementById("messages");
+    const textEl = document.getElementById("text");
+    const sendBtn = document.getElementById("sendBtn");
+    const searchNameEl = document.getElementById("searchName");
+    const searchIdEl = document.getElementById("searchId");
+    const meChipEl = document.getElementById("meChip");
+    const statusTextEl = document.getElementById("statusText");
+    const chatNameEl = document.getElementById("chatName");
+    const chatSubEl = document.getElementById("chatSub");
 
     let nickname = localStorage.getItem("dimichat_name");
+    let clientId = localStorage.getItem("dimichat_client_id");
+    let myShortId = localStorage.getItem("dimichat_short_id");
+    let selectedUser = null;
+    let usersCache = [];
+    let pollingInterval = null;
+    let lastMessageTime = null;
+    let isSending = false;
+    let isDeleting = false;
+    let openReactionPickerFor = null;
+    let reactionMap = new Map();
+    const seenMessageIds = new Set();
+
     if (!nickname) {
-      nickname = prompt("Введите ваш ник");
+      nickname = prompt("Введите имя пользователя");
       if (!nickname || !nickname.trim()) nickname = "Гость";
       nickname = nickname.trim().slice(0, 50);
       localStorage.setItem("dimichat_name", nickname);
     }
 
-    nicknameEl.textContent = "Ты: " + nickname;
+    if (!clientId) {
+      clientId = crypto.randomUUID();
+      localStorage.setItem("dimichat_client_id", clientId);
+    }
 
-    let selectedUser = null;
-    let isSending = false;
-    let isDeletingChat = false;
-    let isLoggingOut = false;
-    let pollingInterval = null;
-    let lastMessageTime = null;
-    let usersCache = [];
-    const seenMessageIds = new Set();
+    function randomShortId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let out = "";
+      for (let i = 0; i < 6; i++) {
+        out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+
+    async function generateUniqueShortId() {
+      for (let i = 0; i < 20; i++) {
+        const shortId = randomShortId();
+        const { data, error } = await client
+          .from("dimichat_users")
+          .select("id")
+          .eq("short_id", shortId)
+          .maybeSingle();
+
+        if (error) continue;
+        if (!data) return shortId;
+      }
+      return "U" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    }
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -328,35 +676,96 @@
     }
 
     function formatTime(value) {
-      if (!value) return "";
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+      return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function normalize(v) {
+      return (v || "").toString().trim().toLowerCase();
+    }
+
+    function autosizeTextarea() {
+      textEl.style.height = "56px";
+      textEl.style.height = Math.min(textEl.scrollHeight, 140) + "px";
     }
 
     function scrollToBottom() {
-      messagesBox.scrollTop = messagesBox.scrollHeight;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    function addSystemMessage(text) {
-      const msg = document.createElement("div");
-      msg.className = "message system";
-      msg.textContent = text;
-      messagesBox.appendChild(msg);
+    function setStatus(text) {
+      statusTextEl.textContent = text;
+    }
+
+    function updateMeChip() {
+      meChipEl.textContent = `Ты: ${nickname} • ID: ${myShortId || "—"}`;
+    }
+
+    function addSystem(text) {
+      const div = document.createElement("div");
+      div.className = "system";
+      div.textContent = text;
+      messagesEl.appendChild(div);
       scrollToBottom();
     }
 
     function clearMessages() {
-      messagesBox.innerHTML = "";
+      messagesEl.innerHTML = "";
       seenMessageIds.clear();
+      reactionMap = new Map();
       lastMessageTime = null;
+      openReactionPickerFor = null;
     }
 
-    function updateDeleteButtonState() {
-      deleteChatBtn.disabled = !selectedUser || isDeletingChat || isLoggingOut;
+    function getDialogFilterString(a, b) {
+      return `and(sender.eq.${a},recipient.eq.${b}),and(sender.eq.${b},recipient.eq.${a})`;
+    }
+
+    function currentDialogFilter() {
+      if (!selectedUser) return null;
+      return getDialogFilterString(nickname, selectedUser.nickname);
+    }
+
+    function isMessageForSelectedDialog(message) {
+      if (!selectedUser) return false;
+      return (
+        (message.sender === nickname && message.recipient === selectedUser.nickname) ||
+        (message.sender === selectedUser.nickname && message.recipient === nickname)
+      );
+    }
+
+    function groupReactions(list) {
+      const grouped = {};
+      for (const r of list) {
+        const key = r.emoji;
+        if (!grouped[key]) grouped[key] = { emoji: key, count: 0, mine: false };
+        grouped[key].count += 1;
+        if (r.reactor === nickname) grouped[key].mine = true;
+      }
+      return Object.values(grouped);
+    }
+
+    function renderReactions(messageId) {
+      const list = reactionMap.get(messageId) || [];
+      const grouped = groupReactions(list);
+      if (!grouped.length) return "";
+      return grouped.map(item => `
+        <button class="reaction ${item.mine ? "mine" : ""}" data-message-id="${messageId}" data-emoji="${item.emoji}">
+          <span>${item.emoji}</span> <span>${item.count}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderReactionPicker(messageId) {
+      if (openReactionPickerFor !== messageId) return "";
+      return `
+        <div class="reaction-picker">
+          ${EMOJIS.map(emoji => `
+            <button class="picker-btn" data-picker-message-id="${messageId}" data-picker-emoji="${emoji}">${emoji}</button>
+          `).join("")}
+        </div>
+      `;
     }
 
     function addMessage(message) {
@@ -365,16 +774,26 @@
       if (message.id) seenMessageIds.add(message.id);
 
       const isMe = message.sender === nickname;
-      const msg = document.createElement("div");
-      msg.className = "message" + (isMe ? " me" : "");
+      const div = document.createElement("div");
+      div.className = "bubble" + (isMe ? " me" : "");
+      div.dataset.messageId = message.id;
 
-      msg.innerHTML = `
-        <div class="author">${escapeHtml(isMe ? "Ты" : message.sender || "Без имени")}</div>
-        <div>${escapeHtml(message.message || "")}</div>
-        <div class="meta">${escapeHtml(formatTime(message.created_at))}</div>
+      div.innerHTML = `
+        <div class="bubble-head">
+          <span>${escapeHtml(isMe ? "Ты" : message.sender)}</span>
+          <span>${escapeHtml(formatTime(message.created_at))}</span>
+        </div>
+        <div class="bubble-body">${escapeHtml(message.message)}</div>
+        <div class="bubble-footer">
+          <div class="reactions" id="reactions-${message.id}">
+            ${renderReactions(message.id)}
+          </div>
+          <button class="ghost" style="min-width:auto;padding:8px 10px" data-open-picker="${message.id}">Реакция</button>
+        </div>
+        ${renderReactionPicker(message.id)}
       `;
 
-      messagesBox.appendChild(msg);
+      messagesEl.appendChild(div);
 
       if (!lastMessageTime || new Date(message.created_at) > new Date(lastMessageTime)) {
         lastMessageTime = message.created_at;
@@ -383,10 +802,91 @@
       scrollToBottom();
     }
 
+    function rerenderMessageReactions(messageId) {
+      const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
+      if (!bubble) return;
+
+      const reactionsContainer = bubble.querySelector(`#reactions-${messageId}`);
+      if (reactionsContainer) {
+        reactionsContainer.innerHTML = renderReactions(messageId);
+      }
+
+      const oldPicker = bubble.querySelector(".reaction-picker");
+      if (oldPicker) oldPicker.remove();
+
+      const footer = bubble.querySelector(".bubble-footer");
+      if (footer) {
+        footer.insertAdjacentHTML("afterend", renderReactionPicker(messageId));
+      }
+    }
+
+    function filterUsers() {
+      const qName = normalize(searchNameEl.value);
+      const qId = normalize(searchIdEl.value);
+
+      return usersCache.filter(user => {
+        const okName = !qName || normalize(user.nickname).includes(qName);
+        const okId = !qId || normalize(user.short_id).includes(qId);
+        return okName && okId;
+      });
+    }
+
+    function renderUsers() {
+      usersListEl.innerHTML = "";
+      const filtered = filterUsers();
+
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "chat-item";
+        empty.innerHTML = `
+          <div class="chat-name">Ничего не найдено</div>
+          <div class="chat-meta">Попробуй другой ID или имя</div>
+        `;
+        usersListEl.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(user => {
+        const item = document.createElement("div");
+        item.className = "chat-item" + (selectedUser && selectedUser.nickname === user.nickname ? " active" : "");
+        item.innerHTML = `
+          <div class="chat-name">${escapeHtml(user.nickname)}</div>
+          <div class="chat-meta">
+            <span>ID: ${escapeHtml(user.short_id || "—")}</span>
+            <span>Личный чат</span>
+          </div>
+        `;
+        item.addEventListener("click", async () => {
+          selectedUser = user;
+          openReactionPickerFor = null;
+          updateChatHeader();
+          renderUsers();
+          await loadConversation(true);
+          if (window.innerWidth <= 980) {
+            layoutEl.classList.add("sidebar-collapsed");
+            toggleSidebarBtn.textContent = "Показать чаты";
+          }
+        });
+        usersListEl.appendChild(item);
+      });
+    }
+
+    function updateChatHeader() {
+      if (!selectedUser) {
+        chatNameEl.textContent = "Выбери пользователя";
+        chatSubEl.textContent = "Личные сообщения и реакции";
+        deleteChatBtn.disabled = true;
+        return;
+      }
+      chatNameEl.textContent = selectedUser.nickname;
+      chatSubEl.textContent = `ID: ${selectedUser.short_id || "—"}`;
+      deleteChatBtn.disabled = false;
+    }
+
     async function ensureCurrentUserExists() {
-      const { data, error } = await client
+      let { data, error } = await client
         .from("dimichat_users")
-        .select("id, nickname")
+        .select("id, nickname, short_id")
         .eq("nickname", nickname)
         .maybeSingle();
 
@@ -396,101 +896,75 @@
       }
 
       if (!data) {
-        const { error: insertError } = await client
+        const shortId = myShortId || await generateUniqueShortId();
+        const { data: inserted, error: insertError } = await client
           .from("dimichat_users")
-          .insert([{ nickname }]);
+          .insert([{ nickname, short_id: shortId }])
+          .select("id, nickname, short_id")
+          .single();
 
         if (insertError) {
           console.error("Ошибка создания пользователя:", insertError);
+          return;
         }
+
+        data = inserted;
+      } else if (!data.short_id) {
+        const shortId = await generateUniqueShortId();
+        const { data: updated } = await client
+          .from("dimichat_users")
+          .update({ short_id: shortId })
+          .eq("id", data.id)
+          .select("id, nickname, short_id")
+          .single();
+
+        data = updated || data;
       }
+
+      myShortId = data.short_id;
+      localStorage.setItem("dimichat_short_id", myShortId);
+      updateMeChip();
     }
 
     async function loadUsers() {
       const { data, error } = await client
         .from("dimichat_users")
-        .select("id, nickname, created_at")
+        .select("id, nickname, short_id, created_at")
         .order("nickname", { ascending: true });
 
       if (error) {
         console.error("Ошибка загрузки пользователей:", error);
-        usersListEl.innerHTML = "";
-        const div = document.createElement("div");
-        div.className = "user-item";
-        div.textContent = "Не удалось загрузить список чатов";
-        usersListEl.appendChild(div);
         return;
       }
 
-      usersCache = (data || []).filter((user) => user.nickname !== nickname);
+      usersCache = (data || []).filter(user => user.nickname !== nickname);
 
-      if (selectedUser && !usersCache.some((user) => user.nickname === selectedUser)) {
-        selectedUser = null;
-        chatTitleEl.textContent = "Выбери пользователя слева";
-        clearMessages();
-        addSystemMessage("Выбери пользователя слева");
+      if (selectedUser) {
+        const fresh = usersCache.find(u => u.nickname === selectedUser.nickname);
+        if (!fresh) {
+          selectedUser = null;
+          clearMessages();
+          addSystem("Пользователь больше недоступен.");
+        } else {
+          selectedUser = fresh;
+        }
       }
 
       renderUsers();
-      updateDeleteButtonState();
-    }
-
-    function renderUsers() {
-      usersListEl.innerHTML = "";
-
-      if (!usersCache.length) {
-        const empty = document.createElement("div");
-        empty.className = "user-item";
-        empty.innerHTML = `
-          <div class="user-name">Пока никого нет</div>
-          <div class="user-sub">Открой чат с другого устройства или под другим ником</div>
-        `;
-        usersListEl.appendChild(empty);
-        return;
-      }
-
-      usersCache.forEach((user) => {
-        const item = document.createElement("div");
-        item.className = "user-item" + (selectedUser === user.nickname ? " active" : "");
-        item.innerHTML = `
-          <div class="user-name">${escapeHtml(user.nickname)}</div>
-          <div class="user-sub">Личная переписка</div>
-        `;
-
-        item.addEventListener("click", async () => {
-          selectedUser = user.nickname;
-          chatTitleEl.textContent = "Чат с " + selectedUser;
-          renderUsers();
-          updateDeleteButtonState();
-          await loadConversation(true);
-          input.focus();
-        });
-
-        usersListEl.appendChild(item);
-      });
-    }
-
-    function isMessageForCurrentDialog(message) {
-      if (!selectedUser) return false;
-
-      const a = message.sender === nickname && message.recipient === selectedUser;
-      const b = message.sender === selectedUser && message.recipient === nickname;
-      return a || b;
+      updateChatHeader();
     }
 
     async function loadConversation(initial = false) {
       if (!selectedUser) {
         clearMessages();
-        addSystemMessage("Выбери пользователя слева");
+        addSystem("Выбери пользователя слева, чтобы начать диалог.");
         return;
       }
 
       let query = client
         .from("private_messages")
         .select("id, sender, recipient, message, created_at")
-        .or(
-          `and(sender.eq.${nickname},recipient.eq.${selectedUser}),and(sender.eq.${selectedUser},recipient.eq.${nickname})`
-        )
+        .or(currentDialogFilter())
         .order("created_at", { ascending: true });
 
       if (!initial && lastMessageTime) {
@@ -500,12 +974,11 @@
       }
 
       const { data, error } = await query;
-
       if (error) {
         console.error("Ошибка загрузки переписки:", error);
         if (initial) {
           clearMessages();
-          addSystemMessage("Не удалось загрузить переписку");
+          addSystem("Не удалось загрузить переписку.");
         }
         return;
       }
@@ -513,183 +986,268 @@
       if (initial) {
         clearMessages();
         if (!data || !data.length) {
-          addSystemMessage("Начни диалог первым");
+          addSystem("Начни диалог первым.");
         }
       }
 
-      (data || []).forEach(addMessage);
+      for (const msg of (data || [])) addMessage(msg);
+      await loadReactionsForVisibleMessages();
     }
 
-    const messagesChannel = client
-      .channel("private-messages-live")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "private_messages"
-        },
-        async (payload) => {
-          roomStateEl.textContent = "Статус: SUBSCRIBED";
+    async function loadReactionsForVisibleMessages() {
+      const ids = [...seenMessageIds];
+      if (!ids.length) return;
 
-          if (payload.eventType === "INSERT" && payload.new && isMessageForCurrentDialog(payload.new)) {
-            addMessage(payload.new);
-          }
+      const { data, error } = await client
+        .from("message_reactions")
+        .select("id, message_id, reactor, emoji, created_at")
+        .in("message_id", ids);
 
-          if (payload.eventType === "DELETE" && selectedUser) {
-            await loadConversation(true);
-          }
+      if (error) {
+        console.error("Ошибка загрузки реакций:", error);
+        return;
+      }
+
+      reactionMap = new Map();
+      for (const row of data || []) {
+        if (!reactionMap.has(row.message_id)) reactionMap.set(row.message_id, []);
+        reactionMap.get(row.message_id).push(row);
+      }
+
+      ids.forEach(rerenderMessageReactions);
+    }
+
+    async function toggleReaction(messageId, emoji) {
+      const current = reactionMap.get(messageId) || [];
+      const mine = current.find(r => r.emoji === emoji && r.reactor === nickname);
+
+      if (mine) {
+        const { error } = await client
+          .from("message_reactions")
+          .delete()
+          .eq("message_id", messageId)
+          .eq("emoji", emoji)
+          .eq("reactor", nickname);
+
+        if (error) {
+          console.error("Ошибка удаления реакции:", error);
         }
-      )
-      .subscribe((status) => {
-        roomStateEl.textContent = "Статус: " + status;
-        console.log("private-messages-live:", status);
-      });
+        return;
+      }
 
-    const usersChannel = client
-      .channel("users-live")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "dimichat_users"
-        },
-        async () => {
-          await loadUsers();
-        }
-      )
-      .subscribe((status) => {
-        console.log("users-live:", status);
-      });
+      const { error } = await client
+        .from("message_reactions")
+        .insert([{ message_id: messageId, reactor: nickname, emoji }]);
+
+      if (error) {
+        console.error("Ошибка добавления реакции:", error);
+      }
+    }
 
     async function sendMessage() {
-      const text = input.value.trim();
-      if (!text || !selectedUser || isSending || isDeletingChat || isLoggingOut) return;
+      const text = textEl.value.trim();
+      if (!text || !selectedUser || isSending) return;
 
       isSending = true;
       sendBtn.disabled = true;
 
       const { data, error } = await client
         .from("private_messages")
-        .insert([
-          {
-            sender: nickname,
-            recipient: selectedUser,
-            message: text.slice(0, 1000)
-          }
-        ])
+        .insert([{
+          sender: nickname,
+          recipient: selectedUser.nickname,
+          message: text.slice(0, 1000)
+        }])
         .select("id, sender, recipient, message, created_at")
         .single();
+
+      isSending = false;
+      sendBtn.disabled = false;
 
       if (error) {
         console.error("Ошибка отправки:", error);
         alert("Не удалось отправить сообщение: " + (error.message || "неизвестно"));
-        isSending = false;
-        sendBtn.disabled = false;
         return;
       }
 
-      if (data && isMessageForCurrentDialog(data)) {
+      if (data && isMessageForSelectedDialog(data)) {
         addMessage(data);
       }
 
-      input.value = "";
-      input.focus();
-
-      isSending = false;
-      sendBtn.disabled = false;
+      textEl.value = "";
+      autosizeTextarea();
+      textEl.focus();
     }
 
     async function deleteCurrentChat() {
-      if (!selectedUser || isDeletingChat || isLoggingOut) return;
+      if (!selectedUser || isDeleting) return;
+      if (!confirm(`Удалить весь чат с ${selectedUser.nickname}?`)) return;
 
-      const ok = confirm(`Удалить весь чат с пользователем ${selectedUser}?`);
-      if (!ok) return;
-
-      isDeletingChat = true;
+      isDeleting = true;
       deleteChatBtn.disabled = true;
-      sendBtn.disabled = true;
 
       const { error } = await client
         .from("private_messages")
         .delete()
-        .or(
-          `and(sender.eq.${nickname},recipient.eq.${selectedUser}),and(sender.eq.${selectedUser},recipient.eq.${nickname})`
-        );
+        .or(currentDialogFilter());
+
+      isDeleting = false;
+      deleteChatBtn.disabled = false;
 
       if (error) {
         console.error("Ошибка удаления чата:", error);
-        alert("Не удалось удалить чат: " + (error.message || "неизвестно"));
-        isDeletingChat = false;
-        sendBtn.disabled = false;
-        updateDeleteButtonState();
+        alert("Не удалось удалить чат.");
         return;
       }
 
       clearMessages();
-      addSystemMessage("Чат удалён");
-      isDeletingChat = false;
-      sendBtn.disabled = false;
-      updateDeleteButtonState();
+      addSystem("Чат удалён.");
     }
 
     async function logout() {
-      if (isLoggingOut) return;
-
-      const ok = confirm("Выйти из аккаунта?");
-      if (!ok) return;
-
-      isLoggingOut = true;
-      logoutBtn.disabled = true;
-      sendBtn.disabled = true;
-      deleteChatBtn.disabled = true;
+      if (!confirm("Выйти из аккаунта?")) return;
 
       try {
-        await client
-          .from("dimichat_users")
-          .delete()
-          .eq("nickname", nickname);
-      } catch (e) {
-        console.warn("Не удалось удалить пользователя из списка:", e);
-      }
+        await client.from("dimichat_users").delete().eq("nickname", nickname);
+      } catch {}
 
       localStorage.removeItem("dimichat_name");
       localStorage.removeItem("dimichat_client_id");
-
+      localStorage.removeItem("dimichat_short_id");
       location.reload();
     }
 
-    input.addEventListener("keydown", async (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        await sendMessage();
-      }
-    });
+    function setupEvents() {
+      toggleSidebarBtn.addEventListener("click", () => {
+        layoutEl.classList.toggle("sidebar-collapsed");
+        toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
+          ? "Показать чаты"
+          : "Скрыть чаты";
+      });
 
-    sendBtn.addEventListener("click", sendMessage);
-    deleteChatBtn.addEventListener("click", deleteCurrentChat);
-    logoutBtn.addEventListener("click", logout);
+      sendBtn.addEventListener("click", sendMessage);
+      deleteChatBtn.addEventListener("click", deleteCurrentChat);
+      logoutBtn.addEventListener("click", logout);
+
+      searchNameEl.addEventListener("input", renderUsers);
+      searchIdEl.addEventListener("input", renderUsers);
+
+      textEl.addEventListener("input", autosizeTextarea);
+      textEl.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          await sendMessage();
+        }
+      });
+
+      messagesEl.addEventListener("click", async (e) => {
+        const openPickerBtn = e.target.closest("[data-open-picker]");
+        if (openPickerBtn) {
+          const messageId = Number(openPickerBtn.dataset.openPicker);
+          openReactionPickerFor = openReactionPickerFor === messageId ? null : messageId;
+          rerenderMessageReactions(messageId);
+          return;
+        }
+
+        const pickerBtn = e.target.closest("[data-picker-message-id]");
+        if (pickerBtn) {
+          const messageId = Number(pickerBtn.dataset.pickerMessageId);
+          const emoji = pickerBtn.dataset.pickerEmoji;
+          await toggleReaction(messageId, emoji);
+          openReactionPickerFor = null;
+          rerenderMessageReactions(messageId);
+          return;
+        }
+
+        const reactionBtn = e.target.closest("[data-message-id][data-emoji]");
+        if (reactionBtn) {
+          const messageId = Number(reactionBtn.dataset.messageId);
+          const emoji = reactionBtn.dataset.emoji;
+          await toggleReaction(messageId, emoji);
+        }
+      });
+    }
+
+    const messagesChannel = client
+      .channel("private-messages-live")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "private_messages"
+      }, async (payload) => {
+        setStatus("Соединение активно");
+        if (payload.eventType === "INSERT" && payload.new && isMessageForSelectedDialog(payload.new)) {
+          addMessage(payload.new);
+        }
+        if (payload.eventType === "DELETE" && selectedUser) {
+          await loadConversation(true);
+        }
+      })
+      .subscribe((status) => {
+        console.log("private-messages-live:", status);
+        setStatus("Статус: " + status);
+      });
+
+    const usersChannel = client
+      .channel("users-live")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "dimichat_users"
+      }, async () => {
+        await loadUsers();
+      })
+      .subscribe((status) => {
+        console.log("users-live:", status);
+      });
+
+    const reactionsChannel = client
+      .channel("reactions-live")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "message_reactions"
+      }, async (payload) => {
+        const messageId = payload.new?.message_id || payload.old?.message_id;
+        if (!messageId || !seenMessageIds.has(messageId)) return;
+
+        const { data, error } = await client
+          .from("message_reactions")
+          .select("id, message_id, reactor, emoji, created_at")
+          .eq("message_id", messageId);
+
+        if (!error) {
+          reactionMap.set(messageId, data || []);
+          rerenderMessageReactions(messageId);
+        }
+      })
+      .subscribe((status) => {
+        console.log("reactions-live:", status);
+      });
 
     async function init() {
+      setupEvents();
+      updateMeChip();
+      autosizeTextarea();
       await ensureCurrentUserExists();
       await loadUsers();
 
       if (usersCache.length && !selectedUser) {
-        selectedUser = usersCache[0].nickname;
-        chatTitleEl.textContent = "Чат с " + selectedUser;
+        selectedUser = usersCache[0];
+        updateChatHeader();
         renderUsers();
-        updateDeleteButtonState();
         await loadConversation(true);
-      } else if (!usersCache.length) {
+      } else {
         clearMessages();
-        addSystemMessage("Пока нет других пользователей. Зайди в чат с другого устройства или под другим ником.");
+        addSystem("Пока нет других пользователей. Зайди с другого устройства или под другим именем.");
       }
 
       pollingInterval = setInterval(async () => {
         await loadUsers();
-        await loadConversation(false);
-      }, 1000);
+        if (selectedUser) {
+          await loadConversation(false);
+        }
+      }, 1200);
     }
 
     init();
@@ -699,9 +1257,8 @@
         if (pollingInterval) clearInterval(pollingInterval);
         await client.removeChannel(messagesChannel);
         await client.removeChannel(usersChannel);
-      } catch (e) {
-        console.warn("Ошибка при отключении каналов:", e);
-      }
+        await client.removeChannel(reactionsChannel);
+      } catch {}
     });
   </script>
 </body>
