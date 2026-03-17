@@ -16,6 +16,7 @@
       --accent:#7c5cff;
       --accent-2:#28c7fa;
       --danger:#d83f68;
+      --success:#27d6a2;
       --top-safe: env(safe-area-inset-top, 0px);
       --bottom-safe: env(safe-area-inset-bottom, 0px);
       --left-safe: env(safe-area-inset-left, 0px);
@@ -60,6 +61,77 @@
     @keyframes drift{
       from{transform:translateY(0) translateX(0) scale(1)}
       to{transform:translateY(30px) translateX(20px) scale(1.08)}
+    }
+
+    .auth-overlay{
+      position:fixed;
+      inset:0;
+      z-index:50;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:rgba(2,8,24,.74);
+      backdrop-filter:blur(14px);
+    }
+
+    .auth-card{
+      width:min(100%, 460px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:30px;
+      padding:28px;
+      background:
+        radial-gradient(circle at top left, rgba(124,92,255,.22), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(40,199,250,.14), transparent 35%),
+        rgba(12,23,52,.9);
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      animation:fadeUp .35s ease;
+    }
+
+    .auth-title{
+      font-size:28px;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+
+    .auth-sub{
+      color:var(--muted);
+      line-height:1.5;
+      margin-bottom:18px;
+      font-size:14px;
+    }
+
+    .auth-label{
+      font-size:13px;
+      color:#cdd9f8;
+      margin-bottom:8px;
+      display:block;
+    }
+
+    .auth-input{
+      width:100%;
+      border:none;
+      outline:none;
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color:white;
+      font-size:16px;
+      margin-bottom:12px;
+    }
+
+    .auth-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .auth-note{
+      margin-top:12px;
+      font-size:12px;
+      color:var(--muted);
     }
 
     .app{
@@ -229,6 +301,13 @@
       box-shadow:0 12px 30px rgba(124,92,255,.16);
     }
 
+    .chat-topline{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+
     .chat-name{
       font-weight:700;
       font-size:15px;
@@ -243,6 +322,10 @@
       gap:8px;
       flex-wrap:wrap;
       word-break:break-word;
+    }
+
+    .pin-badge{
+      font-size:14px;
     }
 
     .chat-pane{
@@ -313,12 +396,20 @@
       border:1px solid rgba(255,255,255,.08);
       box-shadow:0 10px 25px rgba(0,0,0,.12);
       word-break:break-word;
+      animation:messageIn .24s ease;
     }
 
     .bubble.me{
       align-self:flex-end;
       background:linear-gradient(135deg, rgba(124,92,255,.34), rgba(40,199,250,.16));
       border-color:rgba(124,92,255,.4);
+    }
+
+    .bubble-reactions-top{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:8px;
     }
 
     .bubble-head{
@@ -331,6 +422,16 @@
       flex-wrap:wrap;
     }
 
+    .forward-label{
+      font-size:12px;
+      color:#d9e6ff;
+      margin-bottom:8px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      border-left:3px solid rgba(124,92,255,.6);
+    }
+
     .bubble-body{
       font-size:15px;
       line-height:1.45;
@@ -339,11 +440,17 @@
     }
 
     .bubble-footer{
-      margin-top:8px;
+      margin-top:10px;
       display:flex;
       justify-content:space-between;
       align-items:center;
       gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .bubble-actions{
+      display:flex;
+      gap:8px;
       flex-wrap:wrap;
     }
 
@@ -442,11 +549,14 @@
       font-size:14px;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
+      transition:.18s ease;
     }
 
+    button:hover{transform:translateY(-1px)}
     button:disabled{
       opacity:.58;
       cursor:not-allowed;
+      transform:none;
     }
 
     .primary{
@@ -499,6 +609,69 @@
       font-weight:800;
       font-size:14px;
       box-shadow:0 14px 34px rgba(124,92,255,.32);
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      z-index:60;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(0,0,0,.45);
+      backdrop-filter:blur(4px);
+    }
+
+    .modal.show{
+      display:flex;
+    }
+
+    .modal-card{
+      width:min(100%, 480px);
+      max-height:80vh;
+      overflow:auto;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(11,22,49,.94);
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      padding:20px;
+    }
+
+    .modal-title{
+      font-size:22px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .modal-sub{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:14px;
+    }
+
+    .modal-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .modal-item{
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @keyframes messageIn{
+      from{opacity:0;transform:translateY(8px) scale(.99)}
+      to{opacity:1;transform:translateY(0) scale(1)}
     }
 
     @media (max-width: 980px){
@@ -637,6 +810,15 @@
         font-size:13px;
         padding:11px 14px;
       }
+
+      .auth-card{
+        padding:22px;
+        border-radius:24px;
+      }
+
+      .auth-title{
+        font-size:24px;
+      }
     }
   </style>
 </head>
@@ -647,8 +829,40 @@
     <div class="orb three"></div>
   </div>
 
+  <div class="auth-overlay" id="authOverlay" style="display:none">
+    <div class="auth-card">
+      <div class="auth-title">Добро пожаловать в DimiChat</div>
+      <div class="auth-sub">
+        Введи свой ник, чтобы войти в мессенджер. После входа тебе автоматически будет присвоен короткий ID, по которому тебя смогут найти другие пользователи.
+      </div>
+
+      <label class="auth-label" for="authNickname">Твой ник</label>
+      <input id="authNickname" class="auth-input" maxlength="50" placeholder="Например, Алекс" />
+
+      <div class="auth-row">
+        <button class="primary" id="authEnterBtn">Войти</button>
+        <button class="secondary" id="authNotifyBtn">Разрешить уведомления</button>
+      </div>
+
+      <div class="auth-note">
+        Уведомления работают, если браузер поддерживает Notification API и вкладка открыта.
+      </div>
+    </div>
+  </div>
+
   <div class="mobile-overlay" id="mobileOverlay"></div>
   <button class="mobile-chat-button" id="mobileChatButton">Чаты</button>
+
+  <div class="modal" id="forwardModal">
+    <div class="modal-card">
+      <div class="modal-title">Переслать сообщение</div>
+      <div class="modal-sub">Выбери чат, куда отправить сообщение.</div>
+      <div class="modal-list" id="forwardList"></div>
+      <div style="margin-top:14px">
+        <button class="secondary" id="closeForwardModalBtn">Закрыть</button>
+      </div>
+    </div>
+  </div>
 
   <div class="app">
     <div class="topbar">
@@ -688,6 +902,7 @@
           </div>
 
           <div class="header-actions">
+            <button class="ghost" id="pinChatBtn" disabled>Закрепить</button>
             <button class="danger" id="deleteChatBtn" disabled>Удалить чат</button>
           </div>
         </div>
@@ -710,15 +925,22 @@
     const SUPABASE_URL = "https://fftzhwgulytcdyaplszt.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdHpod2d1bHl0Y2R5YXBsc3p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NjY4ODUsImV4cCI6MjA4OTI0Mjg4NX0.hqjbhMlIYPCARVjRq7qtFWvN88quKjUqRnckbW9V0kI";
     const EMOJIS = ["❤️","👍","🔥","😂","😍","😮","👏","😢"];
+    const SELF_CHAT_ID = "__self__";
 
     const { createClient } = window.supabase;
     const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const authOverlay = document.getElementById("authOverlay");
+    const authNickname = document.getElementById("authNickname");
+    const authEnterBtn = document.getElementById("authEnterBtn");
+    const authNotifyBtn = document.getElementById("authNotifyBtn");
 
     const layoutEl = document.getElementById("layout");
     const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
     const mobileChatButton = document.getElementById("mobileChatButton");
     const logoutBtn = document.getElementById("logoutBtn");
     const deleteChatBtn = document.getElementById("deleteChatBtn");
+    const pinChatBtn = document.getElementById("pinChatBtn");
     const usersListEl = document.getElementById("usersList");
     const messagesEl = document.getElementById("messages");
     const textEl = document.getElementById("text");
@@ -731,25 +953,25 @@
     const chatSubEl = document.getElementById("chatSub");
     const mobileOverlayEl = document.getElementById("mobileOverlay");
 
+    const forwardModal = document.getElementById("forwardModal");
+    const forwardList = document.getElementById("forwardList");
+    const closeForwardModalBtn = document.getElementById("closeForwardModalBtn");
+
     let nickname = localStorage.getItem("dimichat_name");
     let clientId = localStorage.getItem("dimichat_client_id");
     let myShortId = localStorage.getItem("dimichat_short_id");
-    let selectedUser = null;
+    let selectedChat = null;
     let usersCache = [];
+    let hiddenChats = new Set();
+    let pinnedChats = new Set();
     let pollingInterval = null;
     let lastMessageTime = null;
     let isSending = false;
     let isDeleting = false;
     let openReactionPickerFor = null;
     let reactionMap = new Map();
+    let forwardPayload = null;
     const seenMessageIds = new Set();
-
-    if (!nickname) {
-      nickname = prompt("Введите имя пользователя");
-      if (!nickname || !nickname.trim()) nickname = "Гость";
-      nickname = nickname.trim().slice(0, 50);
-      localStorage.setItem("dimichat_name", nickname);
-    }
 
     if (!clientId) {
       clientId = crypto.randomUUID();
@@ -758,6 +980,22 @@
 
     function isMobile() {
       return window.innerWidth <= 980;
+    }
+
+    function requestNotifications() {
+      if (!("Notification" in window)) {
+        alert("Этот браузер не поддерживает уведомления.");
+        return;
+      }
+      Notification.requestPermission();
+    }
+
+    function maybeNotify(title, body) {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      if (document.visibilityState === "visible") return;
+
+      new Notification(title, { body });
     }
 
     function updateOverlay() {
@@ -826,6 +1064,10 @@
       return (v || "").toString().trim().toLowerCase();
     }
 
+    function chatKey(chat) {
+      return chat.type === "self" ? SELF_CHAT_ID : chat.nickname;
+    }
+
     function autosizeTextarea() {
       textEl.style.height = "56px";
       textEl.style.height = Math.min(textEl.scrollHeight, 140) + "px";
@@ -844,11 +1086,20 @@
     }
 
     function updateButtonsState() {
-      const hasSelectedUser = !!selectedUser;
+      const hasSelectedChat = !!selectedChat;
       const hasText = !!textEl.value.trim();
+      const deletable = hasSelectedChat && selectedChat.type !== "self";
+      const pinnable = hasSelectedChat && selectedChat.type !== "self";
 
-      sendBtn.disabled = !hasSelectedUser || !hasText || isSending;
-      deleteChatBtn.disabled = !hasSelectedUser || isDeleting;
+      sendBtn.disabled = !hasSelectedChat || !hasText || isSending;
+      deleteChatBtn.disabled = !deletable || isDeleting;
+      pinChatBtn.disabled = !pinnable;
+
+      if (selectedChat && selectedChat.type !== "self") {
+        pinChatBtn.textContent = pinnedChats.has(selectedChat.nickname) ? "Открепить" : "Закрепить";
+      } else {
+        pinChatBtn.textContent = "Закрепить";
+      }
     }
 
     function addSystem(text) {
@@ -867,20 +1118,24 @@
       openReactionPickerFor = null;
     }
 
-    function getDialogFilterString(a, b) {
-      return `and(sender.eq.${a},recipient.eq.${b}),and(sender.eq.${b},recipient.eq.${a})`;
-    }
-
-    function currentDialogFilter() {
-      if (!selectedUser) return null;
-      return getDialogFilterString(nickname, selectedUser.nickname);
+    function currentDialogFilterString() {
+      if (!selectedChat) return null;
+      if (selectedChat.type === "self") {
+        return `and(sender.eq.${nickname},recipient.eq.${nickname})`;
+      }
+      return `and(sender.eq.${nickname},recipient.eq.${selectedChat.nickname}),and(sender.eq.${selectedChat.nickname},recipient.eq.${nickname})`;
     }
 
     function isMessageForSelectedDialog(message) {
-      if (!selectedUser) return false;
+      if (!selectedChat) return false;
+
+      if (selectedChat.type === "self") {
+        return message.sender === nickname && message.recipient === nickname;
+      }
+
       return (
-        (message.sender === nickname && message.recipient === selectedUser.nickname) ||
-        (message.sender === selectedUser.nickname && message.recipient === nickname)
+        (message.sender === nickname && message.recipient === selectedChat.nickname) ||
+        (message.sender === selectedChat.nickname && message.recipient === nickname)
       );
     }
 
@@ -928,16 +1183,26 @@
       div.dataset.messageId = message.id;
 
       div.innerHTML = `
+        <div class="bubble-reactions-top" id="reactions-top-${message.id}">
+          ${renderReactions(message.id)}
+        </div>
         <div class="bubble-head">
           <span>${escapeHtml(isMe ? "Ты" : message.sender)}</span>
           <span>${escapeHtml(formatTime(message.created_at))}</span>
         </div>
+        ${message.forwarded_from_sender ? `
+          <div class="forward-label">
+            Переслано от ${escapeHtml(message.forwarded_from_sender)}
+            ${message.forwarded_from_text ? `<div style="margin-top:4px;opacity:.85">${escapeHtml(message.forwarded_from_text)}</div>` : ""}
+          </div>
+        ` : ""}
         <div class="bubble-body">${escapeHtml(message.message)}</div>
         <div class="bubble-footer">
-          <div class="reactions" id="reactions-${message.id}">
-            ${renderReactions(message.id)}
+          <div class="bubble-actions">
+            <button class="ghost" style="min-width:auto;padding:8px 10px" data-open-picker="${message.id}">Реакция</button>
+            <button class="ghost" style="min-width:auto;padding:8px 10px" data-save-message="${message.id}">В избранное</button>
+            <button class="ghost" style="min-width:auto;padding:8px 10px" data-forward-message="${message.id}">Переслать</button>
           </div>
-          <button class="ghost" style="min-width:auto;padding:8px 10px" data-open-picker="${message.id}">Реакция</button>
         </div>
         ${renderReactionPicker(message.id)}
       `;
@@ -955,30 +1220,58 @@
       const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
       if (!bubble) return;
 
-      const reactionsContainer = bubble.querySelector(`#reactions-${messageId}`);
-      if (reactionsContainer) reactionsContainer.innerHTML = renderReactions(messageId);
+      const reactionsTop = bubble.querySelector(`#reactions-top-${messageId}`);
+      if (reactionsTop) reactionsTop.innerHTML = renderReactions(messageId);
 
       const oldPicker = bubble.querySelector(".reaction-picker");
       if (oldPicker) oldPicker.remove();
 
-      const footer = bubble.querySelector(".bubble-footer");
-      if (footer) footer.insertAdjacentHTML("afterend", renderReactionPicker(messageId));
+      bubble.insertAdjacentHTML("beforeend", renderReactionPicker(messageId));
     }
 
-    function filterUsers() {
+    function buildChatList() {
+      const favorites = {
+        type: "self",
+        nickname,
+        short_id: "FAV",
+        title: "Избранные сообщения"
+      };
+
+      let list = usersCache
+        .filter(user => !hiddenChats.has(user.nickname))
+        .map(user => ({
+          type: "user",
+          nickname: user.nickname,
+          short_id: user.short_id,
+          pinned: pinnedChats.has(user.nickname)
+        }));
+
+      list.sort((a, b) => {
+        const aPinned = a.pinned ? 1 : 0;
+        const bPinned = b.pinned ? 1 : 0;
+        if (aPinned !== bPinned) return bPinned - aPinned;
+        return a.nickname.localeCompare(b.nickname, "ru");
+      });
+
+      return [favorites, ...list];
+    }
+
+    function filterChats() {
       const qName = normalize(searchNameEl.value);
       const qId = normalize(searchIdEl.value);
 
-      return usersCache.filter(user => {
-        const okName = !qName || normalize(user.nickname).includes(qName);
-        const okId = !qId || normalize(user.short_id).includes(qId);
+      return buildChatList().filter(chat => {
+        const nameValue = chat.type === "self" ? "избранные сообщения" : chat.nickname;
+        const idValue = chat.type === "self" ? "fav" : (chat.short_id || "");
+        const okName = !qName || normalize(nameValue).includes(qName);
+        const okId = !qId || normalize(idValue).includes(qId);
         return okName && okId;
       });
     }
 
     function renderUsers() {
       usersListEl.innerHTML = "";
-      const filtered = filterUsers();
+      const filtered = filterChats();
 
       if (!filtered.length) {
         const empty = document.createElement("div");
@@ -991,19 +1284,24 @@
         return;
       }
 
-      filtered.forEach(user => {
+      filtered.forEach(chat => {
         const item = document.createElement("div");
-        item.className = "chat-item" + (selectedUser && selectedUser.nickname === user.nickname ? " active" : "");
+        const active = selectedChat && chatKey(selectedChat) === chatKey(chat);
+        item.className = "chat-item" + (active ? " active" : "");
+
         item.innerHTML = `
-          <div class="chat-name">${escapeHtml(user.nickname)}</div>
+          <div class="chat-topline">
+            <div class="chat-name">${escapeHtml(chat.type === "self" ? "Избранные сообщения" : chat.nickname)}</div>
+            <div class="pin-badge">${chat.type === "user" && pinnedChats.has(chat.nickname) ? "📌" : ""}</div>
+          </div>
           <div class="chat-meta">
-            <span>ID: ${escapeHtml(user.short_id || "—")}</span>
-            <span>Личный чат</span>
+            <span>ID: ${escapeHtml(chat.type === "self" ? "FAV" : (chat.short_id || "—"))}</span>
+            <span>${chat.type === "self" ? "Чат с собой" : "Личный чат"}</span>
           </div>
         `;
 
         item.addEventListener("click", async () => {
-          selectedUser = user;
+          selectedChat = chat;
           openReactionPickerFor = null;
           updateChatHeader();
           updateButtonsState();
@@ -1017,15 +1315,21 @@
     }
 
     function updateChatHeader() {
-      if (!selectedUser) {
+      if (!selectedChat) {
         chatNameEl.textContent = "Выбери пользователя";
         chatSubEl.textContent = "Личные сообщения и реакции";
         updateButtonsState();
         return;
       }
 
-      chatNameEl.textContent = selectedUser.nickname;
-      chatSubEl.textContent = `ID: ${selectedUser.short_id || "—"}`;
+      if (selectedChat.type === "self") {
+        chatNameEl.textContent = "Избранные сообщения";
+        chatSubEl.textContent = "Личный чат с самим собой";
+      } else {
+        chatNameEl.textContent = selectedChat.nickname;
+        chatSubEl.textContent = `ID: ${selectedChat.short_id || "—"}`;
+      }
+
       updateButtonsState();
     }
 
@@ -1072,6 +1376,16 @@
       updateMeChip();
     }
 
+    async function loadHiddenAndPinned() {
+      const [{ data: hiddenData }, { data: pinnedData }] = await Promise.all([
+        client.from("hidden_chats").select("target").eq("owner", nickname),
+        client.from("pinned_chats").select("target").eq("owner", nickname)
+      ]);
+
+      hiddenChats = new Set((hiddenData || []).map(i => i.target));
+      pinnedChats = new Set((pinnedData || []).map(i => i.target));
+    }
+
     async function loadUsers() {
       const { data, error } = await client
         .from("dimichat_users")
@@ -1085,14 +1399,14 @@
 
       usersCache = (data || []).filter(user => user.nickname !== nickname);
 
-      if (selectedUser) {
-        const fresh = usersCache.find(u => u.nickname === selectedUser.nickname);
+      if (selectedChat && selectedChat.type === "user") {
+        const fresh = usersCache.find(u => u.nickname === selectedChat.nickname);
         if (!fresh) {
-          selectedUser = null;
+          selectedChat = null;
           clearMessages();
           addSystem("Пользователь больше недоступен.");
         } else {
-          selectedUser = fresh;
+          selectedChat = { ...selectedChat, ...fresh };
         }
       }
 
@@ -1102,7 +1416,7 @@
     }
 
     async function loadConversation(initial = false) {
-      if (!selectedUser) {
+      if (!selectedChat) {
         clearMessages();
         addSystem("Выбери пользователя слева, чтобы начать диалог.");
         updateButtonsState();
@@ -1111,8 +1425,8 @@
 
       let query = client
         .from("private_messages")
-        .select("id, sender, recipient, message, created_at")
-        .or(currentDialogFilter())
+        .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text")
+        .or(currentDialogFilterString())
         .order("created_at", { ascending: true });
 
       if (!initial && lastMessageTime) {
@@ -1134,7 +1448,7 @@
 
       if (initial) {
         clearMessages();
-        if (!data || !data.length) addSystem("Начни диалог первым.");
+        if (!data || !data.length) addSystem(selectedChat.type === "self" ? "Сохраняй здесь важные сообщения." : "Начни диалог первым.");
       }
 
       for (const msg of (data || [])) addMessage(msg);
@@ -1188,9 +1502,97 @@
       if (error) console.error("Ошибка добавления реакции:", error);
     }
 
+    async function saveMessageToFavorites(messageId) {
+      const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
+      if (!bubble) return;
+
+      const body = bubble.querySelector(".bubble-body")?.textContent || "";
+      const sender = bubble.querySelector(".bubble-head span")?.textContent || "Сообщение";
+
+      const { error } = await client
+        .from("private_messages")
+        .insert([{
+          sender: nickname,
+          recipient: nickname,
+          message: body,
+          forwarded_from_sender: sender,
+          forwarded_from_text: body.slice(0, 120)
+        }]);
+
+      if (error) {
+        console.error("Ошибка сохранения в избранное:", error);
+        return;
+      }
+
+      if (selectedChat && selectedChat.type === "self") {
+        await loadConversation(true);
+      }
+    }
+
+    function openForwardModalFor(messageId) {
+      const bubble = messagesEl.querySelector(`[data-message-id="${messageId}"]`);
+      if (!bubble) return;
+
+      const text = bubble.querySelector(".bubble-body")?.textContent || "";
+      const sender = bubble.querySelector(".bubble-head span")?.textContent || "Сообщение";
+
+      forwardPayload = {
+        text,
+        sender
+      };
+
+      const chats = buildChatList();
+      forwardList.innerHTML = "";
+
+      chats.forEach(chat => {
+        const item = document.createElement("div");
+        item.className = "modal-item";
+        item.innerHTML = `
+          <div style="font-weight:700">${escapeHtml(chat.type === "self" ? "Избранные сообщения" : chat.nickname)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            ${escapeHtml(chat.type === "self" ? "Чат с собой" : ("ID: " + (chat.short_id || "—")))}
+          </div>
+        `;
+        item.addEventListener("click", async () => {
+          await forwardToChat(chat);
+        });
+        forwardList.appendChild(item);
+      });
+
+      forwardModal.classList.add("show");
+    }
+
+    async function forwardToChat(chat) {
+      if (!forwardPayload) return;
+
+      const recipient = chat.type === "self" ? nickname : chat.nickname;
+
+      const { error } = await client
+        .from("private_messages")
+        .insert([{
+          sender: nickname,
+          recipient,
+          message: forwardPayload.text,
+          forwarded_from_sender: forwardPayload.sender,
+          forwarded_from_text: forwardPayload.text.slice(0, 120)
+        }]);
+
+      if (error) {
+        console.error("Ошибка пересылки:", error);
+        return;
+      }
+
+      forwardModal.classList.remove("show");
+      forwardPayload = null;
+
+      if (selectedChat && chatKey(selectedChat) === chatKey(chat)) {
+        await loadConversation(true);
+      }
+    }
+
     async function sendMessage() {
       const text = textEl.value.trim();
-      if (!text || !selectedUser || isSending) {
+      if (!text || !selectedChat || isSending) {
         updateButtonsState();
         return;
       }
@@ -1198,14 +1600,16 @@
       isSending = true;
       updateButtonsState();
 
+      const recipient = selectedChat.type === "self" ? nickname : selectedChat.nickname;
+
       const { data, error } = await client
         .from("private_messages")
         .insert([{
           sender: nickname,
-          recipient: selectedUser.nickname,
+          recipient,
           message: text.slice(0, 1000)
         }])
-        .select("id, sender, recipient, message, created_at")
+        .select("id, sender, recipient, message, created_at, forwarded_from_sender, forwarded_from_text")
         .single();
 
       isSending = false;
@@ -1226,28 +1630,57 @@
     }
 
     async function deleteCurrentChat() {
-      if (!selectedUser || isDeleting) return;
-      if (!confirm(`Удалить весь чат с ${selectedUser.nickname}?`)) return;
+      if (!selectedChat || selectedChat.type === "self" || isDeleting) return;
+      if (!confirm(`Удалить чат с ${selectedChat.nickname}? Он исчезнет из списка, пока пользователь снова не появится.`)) return;
 
       isDeleting = true;
       updateButtonsState();
 
+      await client.from("hidden_chats").upsert({
+        owner: nickname,
+        target: selectedChat.nickname
+      });
+
+      await client.from("pinned_chats")
+        .delete()
+        .eq("owner", nickname)
+        .eq("target", selectedChat.nickname);
+
       const { error } = await client
         .from("private_messages")
         .delete()
-        .or(currentDialogFilter());
+        .or(`and(sender.eq.${nickname},recipient.eq.${selectedChat.nickname}),and(sender.eq.${selectedChat.nickname},recipient.eq.${nickname})`);
 
       isDeleting = false;
       updateButtonsState();
 
       if (error) {
         console.error("Ошибка удаления чата:", error);
-        alert("Не удалось удалить чат.");
-        return;
       }
 
+      selectedChat = null;
       clearMessages();
-      addSystem("Чат удалён.");
+      addSystem("Чат скрыт.");
+      await loadHiddenAndPinned();
+      await loadUsers();
+      renderUsers();
+      updateChatHeader();
+    }
+
+    async function togglePinCurrentChat() {
+      if (!selectedChat || selectedChat.type === "self") return;
+
+      const target = selectedChat.nickname;
+
+      if (pinnedChats.has(target)) {
+        await client.from("pinned_chats").delete().eq("owner", nickname).eq("target", target);
+      } else {
+        await client.from("pinned_chats").upsert({ owner: nickname, target });
+      }
+
+      await loadHiddenAndPinned();
+      renderUsers();
+      updateButtonsState();
     }
 
     async function logout() {
@@ -1265,11 +1698,8 @@
 
     function setupEvents() {
       toggleSidebarBtn.addEventListener("click", () => {
-        if (layoutEl.classList.contains("sidebar-collapsed")) {
-          openSidebar();
-        } else {
-          closeSidebar();
-        }
+        if (layoutEl.classList.contains("sidebar-collapsed")) openSidebar();
+        else closeSidebar();
       });
 
       mobileChatButton.addEventListener("click", openSidebar);
@@ -1277,6 +1707,7 @@
 
       sendBtn.addEventListener("click", sendMessage);
       deleteChatBtn.addEventListener("click", deleteCurrentChat);
+      pinChatBtn.addEventListener("click", togglePinCurrentChat);
       logoutBtn.addEventListener("click", logout);
 
       searchNameEl.addEventListener("input", renderUsers);
@@ -1318,8 +1749,43 @@
           const messageId = Number(reactionBtn.dataset.messageId);
           const emoji = reactionBtn.dataset.emoji;
           await toggleReaction(messageId, emoji);
+          return;
+        }
+
+        const saveBtn = e.target.closest("[data-save-message]");
+        if (saveBtn) {
+          await saveMessageToFavorites(Number(saveBtn.dataset.saveMessage));
+          return;
+        }
+
+        const forwardBtn = e.target.closest("[data-forward-message]");
+        if (forwardBtn) {
+          openForwardModalFor(Number(forwardBtn.dataset.forwardMessage));
         }
       });
+
+      closeForwardModalBtn.addEventListener("click", () => {
+        forwardModal.classList.remove("show");
+        forwardPayload = null;
+      });
+
+      authEnterBtn.addEventListener("click", async () => {
+        const value = authNickname.value.trim();
+        if (!value) return;
+        nickname = value.slice(0, 50);
+        localStorage.setItem("dimichat_name", nickname);
+        authOverlay.style.display = "none";
+        await initAfterAuth();
+      });
+
+      authNickname.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          authEnterBtn.click();
+        }
+      });
+
+      authNotifyBtn.addEventListener("click", requestNotifications);
 
       window.addEventListener("resize", syncResponsiveState);
     }
@@ -1332,10 +1798,21 @@
         table: "private_messages"
       }, async (payload) => {
         setStatus("Соединение активно");
-        if (payload.eventType === "INSERT" && payload.new && isMessageForSelectedDialog(payload.new)) {
-          addMessage(payload.new);
+
+        if (payload.eventType === "INSERT" && payload.new) {
+          const msg = payload.new;
+
+          const incomingForMe = msg.recipient === nickname && msg.sender !== nickname;
+          if (incomingForMe) {
+            maybeNotify("Новое сообщение", `От ${msg.sender}: ${msg.message}`);
+          }
+
+          if (isMessageForSelectedDialog(msg)) {
+            addMessage(msg);
+          }
         }
-        if (payload.eventType === "DELETE" && selectedUser) {
+
+        if (payload.eventType === "DELETE" && selectedChat) {
           await loadConversation(true);
         }
       })
@@ -1349,8 +1826,38 @@
         event: "*",
         schema: "public",
         table: "dimichat_users"
-      }, async () => {
+      }, async (payload) => {
+        if (payload.eventType === "INSERT" && payload.new?.nickname) {
+          await client
+            .from("hidden_chats")
+            .delete()
+            .eq("owner", nickname)
+            .eq("target", payload.new.nickname);
+        }
+
+        await loadHiddenAndPinned();
         await loadUsers();
+      })
+      .subscribe();
+
+    const hiddenPinnedChannel = client
+      .channel("hidden-pinned-live")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "hidden_chats"
+      }, async () => {
+        await loadHiddenAndPinned();
+        renderUsers();
+      })
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "pinned_chats"
+      }, async () => {
+        await loadHiddenAndPinned();
+        renderUsers();
+        updateButtonsState();
       })
       .subscribe();
 
@@ -1376,32 +1883,42 @@
       })
       .subscribe();
 
-    async function init() {
-      setupEvents();
+    async function initAfterAuth() {
       updateMeChip();
       autosizeTextarea();
       syncResponsiveState();
       updateButtonsState();
 
       await ensureCurrentUserExists();
+      await loadHiddenAndPinned();
       await loadUsers();
 
-      if (usersCache.length && !selectedUser) {
-        selectedUser = usersCache[0];
-        updateChatHeader();
-        renderUsers();
-        await loadConversation(true);
-      } else {
-        clearMessages();
-        addSystem("Пока нет других пользователей. Зайди с другого устройства или под другим именем.");
+      if (!selectedChat) {
+        selectedChat = { type: "self", nickname, short_id: "FAV", title: "Избранные сообщения" };
       }
 
-      updateButtonsState();
+      updateChatHeader();
+      renderUsers();
+      await loadConversation(true);
 
+      if (pollingInterval) clearInterval(pollingInterval);
       pollingInterval = setInterval(async () => {
+        await loadHiddenAndPinned();
         await loadUsers();
-        if (selectedUser) await loadConversation(false);
-      }, 1200);
+        if (selectedChat) await loadConversation(false);
+      }, 1500);
+    }
+
+    async function init() {
+      setupEvents();
+
+      if (!nickname) {
+        authOverlay.style.display = "flex";
+        syncResponsiveState();
+        return;
+      }
+
+      await initAfterAuth();
     }
 
     init();
@@ -1411,6 +1928,7 @@
         if (pollingInterval) clearInterval(pollingInterval);
         await client.removeChannel(messagesChannel);
         await client.removeChannel(usersChannel);
+        await client.removeChannel(hiddenPinnedChannel);
         await client.removeChannel(reactionsChannel);
       } catch {}
     });
