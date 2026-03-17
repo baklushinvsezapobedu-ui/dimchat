@@ -8,8 +8,6 @@
 
   <style>
     :root{
-      --bg:#061126;
-      --bg2:#0a1733;
       --panel:rgba(13,25,56,.82);
       --panel-2:rgba(18,33,73,.86);
       --line:rgba(255,255,255,.08);
@@ -18,8 +16,6 @@
       --accent:#7c5cff;
       --accent-2:#28c7fa;
       --danger:#d83f68;
-      --shadow:0 20px 60px rgba(0,0,0,.35);
-      --blur:blur(18px);
       --top-safe: env(safe-area-inset-top, 0px);
       --bottom-safe: env(safe-area-inset-bottom, 0px);
       --left-safe: env(safe-area-inset-left, 0px);
@@ -39,7 +35,6 @@
         linear-gradient(180deg,#061126 0%, #07132b 40%, #09162e 100%);
       overflow:hidden;
       -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
     }
 
     .ambient{
@@ -90,8 +85,8 @@
       border:1px solid var(--line);
       border-radius:22px;
       background:rgba(10,22,50,.72);
-      backdrop-filter:var(--blur);
-      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
       min-width:0;
     }
 
@@ -169,12 +164,13 @@
       border:1px solid var(--line);
       border-radius:24px;
       background:var(--panel);
-      backdrop-filter:var(--blur);
-      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
       display:flex;
       flex-direction:column;
       overflow:hidden;
       transition:transform .28s ease, opacity .28s ease;
+      z-index:6;
     }
 
     .sidebar-head{
@@ -227,12 +223,6 @@
       transition:transform .18s ease, background .18s ease, border-color .18s ease;
     }
 
-    .chat-item:hover{
-      transform:translateY(-2px);
-      background:rgba(255,255,255,.07);
-      border-color:rgba(255,255,255,.12);
-    }
-
     .chat-item.active{
       background:linear-gradient(135deg, rgba(124,92,255,.25), rgba(40,199,250,.14));
       border-color:rgba(124,92,255,.45);
@@ -260,8 +250,8 @@
       border:1px solid var(--line);
       border-radius:24px;
       background:var(--panel-2);
-      backdrop-filter:var(--blur);
-      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
       display:grid;
       grid-template-rows:auto 1fr auto;
       overflow:hidden;
@@ -313,21 +303,15 @@
       gap:12px;
       scroll-behavior:smooth;
       -webkit-overflow-scrolling:touch;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.02), transparent 22%),
-        radial-gradient(circle at top center, rgba(124,92,255,.06), transparent 35%);
     }
 
     .bubble{
       max-width:min(72%, 680px);
       padding:12px 14px 10px;
       border-radius:20px;
-      position:relative;
       background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.08);
       box-shadow:0 10px 25px rgba(0,0,0,.12);
-      animation:messageIn .28s cubic-bezier(.2,.8,.2,1);
-      transform-origin:bottom left;
       word-break:break-word;
     }
 
@@ -335,7 +319,6 @@
       align-self:flex-end;
       background:linear-gradient(135deg, rgba(124,92,255,.34), rgba(40,199,250,.16));
       border-color:rgba(124,92,255,.4);
-      transform-origin:bottom right;
     }
 
     .bubble-head{
@@ -380,12 +363,10 @@
       font-size:13px;
       border-radius:999px;
       cursor:pointer;
-      border:1px solid rgba(255,255,255,.07);
     }
 
     .reaction.mine{
       background:rgba(124,92,255,.25);
-      border-color:rgba(124,92,255,.5);
     }
 
     .reaction-picker{
@@ -460,14 +441,12 @@
       font-weight:700;
       font-size:14px;
       cursor:pointer;
-      transition:transform .18s ease, opacity .18s ease, box-shadow .18s ease;
       -webkit-tap-highlight-color:transparent;
     }
 
     button:disabled{
       opacity:.58;
       cursor:not-allowed;
-      transform:none;
     }
 
     .primary{
@@ -482,7 +461,6 @@
 
     .danger{
       background:linear-gradient(135deg, #d83f68, #b51743);
-      box-shadow:0 12px 30px rgba(216,63,104,.22);
     }
 
     .ghost{
@@ -491,16 +469,12 @@
       padding:11px 14px;
     }
 
-    .pulse{
-      animation:pulse 1.2s ease infinite;
-    }
-
     .mobile-overlay{
       position:fixed;
       inset:0;
       background:rgba(0,0,0,.45);
       backdrop-filter:blur(3px);
-      z-index:4;
+      z-index:5;
       opacity:0;
       pointer-events:none;
       transition:.25s ease;
@@ -511,15 +485,20 @@
       pointer-events:auto;
     }
 
-    @keyframes pulse{
-      0%{box-shadow:0 0 0 0 rgba(124,92,255,.36)}
-      70%{box-shadow:0 0 0 14px rgba(124,92,255,0)}
-      100%{box-shadow:0 0 0 0 rgba(124,92,255,0)}
-    }
-
-    @keyframes messageIn{
-      from{opacity:0;transform:translateY(10px) scale(.98)}
-      to{opacity:1;transform:translateY(0) scale(1)}
+    .mobile-chat-button{
+      display:none;
+      position:fixed;
+      right:calc(14px + var(--right-safe));
+      bottom:calc(22px + var(--bottom-safe));
+      z-index:8;
+      border:none;
+      border-radius:999px;
+      padding:14px 18px;
+      background:linear-gradient(135deg, var(--accent), #5fa5ff);
+      color:white;
+      font-weight:800;
+      font-size:14px;
+      box-shadow:0 14px 34px rgba(124,92,255,.32);
     }
 
     @media (max-width: 980px){
@@ -542,7 +521,6 @@
         left:calc(10px + var(--left-safe));
         bottom:calc(10px + var(--bottom-safe));
         width:min(88vw,340px);
-        z-index:5;
         transform:translateX(0);
       }
 
@@ -609,13 +587,13 @@
       .buttons-col button{
         width:100%;
       }
+
+      .mobile-chat-button{
+        display:block;
+      }
     }
 
     @media (max-width: 560px){
-      .brand{
-        width:100%;
-      }
-
       .topbar{
         gap:10px;
       }
@@ -670,6 +648,7 @@
   </div>
 
   <div class="mobile-overlay" id="mobileOverlay"></div>
+  <button class="mobile-chat-button" id="mobileChatButton">Чаты</button>
 
   <div class="app">
     <div class="topbar">
@@ -694,7 +673,7 @@
           <div class="sidebar-title">Личные чаты</div>
           <div class="search-wrap">
             <input id="searchName" class="search" placeholder="Поиск по имени" />
-            <input id="searchId" class="search" placeholder="Поиск по ID, например A7K2QF" />
+            <input id="searchId" class="search" placeholder="Поиск по ID" />
           </div>
         </div>
 
@@ -720,7 +699,7 @@
         <div class="composer">
           <textarea id="text" placeholder="Напиши сообщение..."></textarea>
           <div class="buttons-col">
-            <button class="primary pulse" id="sendBtn" disabled>Отправить</button>
+            <button class="primary" id="sendBtn" disabled>Отправить</button>
           </div>
         </div>
       </section>
@@ -737,6 +716,7 @@
 
     const layoutEl = document.getElementById("layout");
     const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+    const mobileChatButton = document.getElementById("mobileChatButton");
     const logoutBtn = document.getElementById("logoutBtn");
     const deleteChatBtn = document.getElementById("deleteChatBtn");
     const usersListEl = document.getElementById("usersList");
@@ -785,18 +765,14 @@
       mobileOverlayEl.classList.toggle("show", show);
     }
 
-    function openSidebarMobile() {
-      if (isMobile()) {
-        layoutEl.classList.remove("sidebar-collapsed");
-        toggleSidebarBtn.textContent = "Скрыть чаты";
-        updateOverlay();
-      }
+    function openSidebar() {
+      layoutEl.classList.remove("sidebar-collapsed");
+      updateOverlay();
     }
 
-    function closeSidebarMobile() {
+    function closeSidebar() {
       if (isMobile()) {
         layoutEl.classList.add("sidebar-collapsed");
-        toggleSidebarBtn.textContent = "Чаты";
         updateOverlay();
       }
     }
@@ -810,11 +786,6 @@
       } else {
         layoutEl.classList.remove("sidebar-collapsed");
       }
-
-      toggleSidebarBtn.textContent = layoutEl.classList.contains("sidebar-collapsed")
-        ? "Чаты"
-        : "Скрыть чаты";
-
       updateOverlay();
     }
 
@@ -1038,7 +1009,7 @@
           updateButtonsState();
           renderUsers();
           await loadConversation(true);
-          closeSidebarMobile();
+          closeSidebar();
         });
 
         usersListEl.appendChild(item);
@@ -1127,6 +1098,7 @@
 
       renderUsers();
       updateChatHeader();
+      updateButtonsState();
     }
 
     async function loadConversation(initial = false) {
@@ -1294,15 +1266,15 @@
     function setupEvents() {
       toggleSidebarBtn.addEventListener("click", () => {
         if (layoutEl.classList.contains("sidebar-collapsed")) {
-          openSidebarMobile();
+          openSidebar();
         } else {
-          layoutEl.classList.add("sidebar-collapsed");
-          toggleSidebarBtn.textContent = isMobile() ? "Чаты" : "Чаты";
-          updateOverlay();
+          closeSidebar();
         }
       });
 
-      mobileOverlayEl.addEventListener("click", closeSidebarMobile);
+      mobileChatButton.addEventListener("click", openSidebar);
+      mobileOverlayEl.addEventListener("click", closeSidebar);
+
       sendBtn.addEventListener("click", sendMessage);
       deleteChatBtn.addEventListener("click", deleteCurrentChat);
       logoutBtn.addEventListener("click", logout);
