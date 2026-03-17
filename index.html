@@ -16,7 +16,6 @@
       --accent:#7c5cff;
       --danger:#d83f68;
       --success:#27d6a2;
-      --bg:#061126;
       --top-safe: env(safe-area-inset-top, 0px);
       --bottom-safe: env(safe-area-inset-bottom, 0px);
       --left-safe: env(safe-area-inset-left, 0px);
@@ -794,11 +793,6 @@
       cursor:pointer;
     }
 
-    @keyframes messageIn{
-      from{opacity:0;transform:translateY(6px)}
-      to{opacity:1;transform:translateY(0)}
-    }
-
     @media (max-width: 980px){
       .layout{
         grid-template-columns:1fr;
@@ -1402,7 +1396,6 @@
 
     function renderMediaBlock(message) {
       if (!message?.media_path || !message?.media_type) return "";
-
       const { data } = client.storage.from(MEDIA_BUCKET).getPublicUrl(message.media_path);
       const mediaUrl = data.publicUrl;
 
@@ -1518,10 +1511,15 @@
       const qId = normalize(searchIdEl.value);
 
       return buildChatList().filter(chat => {
-        const nameValue = chat.type === "self" ? "избранные сообщения" : chat.nickname;
+        const nameValue = chat.type === "self" ? "избранные сообщения" : (chat.nickname || "");
         const idValue = chat.type === "self" ? "fav" : (chat.short_id || "");
-        const okName = !qName || normalize(nameValue).includes(qName);
-        const okId = !qId || normalize(idValue).includes(qId);
+
+        const normalizedName = normalize(nameValue);
+        const normalizedId = normalize(idValue);
+
+        const okName = !qName || normalizedName.includes(qName);
+        const okId = !qId || normalizedId === qId || normalizedId.startsWith(qId);
+
         return okName && okId;
       });
     }
@@ -1936,11 +1934,7 @@
 
       const recipient = selectedChat.type === "self" ? nickname : selectedChat.nickname;
 
-      let mediaData = {
-        path: null,
-        type: null,
-        name: null
-      };
+      let mediaData = { path: null, type: null, name: null };
 
       try {
         if (selectedMediaFile) {
@@ -2371,7 +2365,13 @@
       await loadUsers();
 
       if (!selectedChat) {
-        selectedChat = { type: "self", nickname, short_id: "FAV", title: "Избранные сообщения", bio: "Личный чат с самим собой" };
+        selectedChat = {
+          type: "self",
+          nickname,
+          short_id: "FAV",
+          title: "Избранные сообщения",
+          bio: "Личный чат с самим собой"
+        };
       }
 
       updateChatHeader();
